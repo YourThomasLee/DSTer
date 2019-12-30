@@ -8,12 +8,12 @@ The environment settings:
 > pytorch: 1.3.1 [cpuonly]
 
 ## Directory architecture setting
-The repo directory are assumed as follows:
+The repo directory is assumed as follows:
 - repo directory
   - source file (all files are presented in this repo)
   
   - data
-    
+    - statenet
     - embeddings
       - paragram_300_sl999.txt
     - dstc2(https://pan.baidu.com/s/1rWPXZQ3ZH5OpKEdxFXsagA ; 8kaj )
