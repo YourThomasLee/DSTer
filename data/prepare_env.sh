@@ -16,12 +16,12 @@ function get(){
 
     if [ -f $name ]; then
         if [[ $name =~ "tar.gz" ]]; then
-            tar -xvzf --overwrite $name
+            tar -xvzf $name
         elif [[ $name =~ ".zip" ]]; then 
-            unzip $name
+            unzip -oq $name
         fi
     else 
-        echo "error in fetch $name from $addr within $turns turns"
+        echo "error in fetching $name from $addr within $turns turns"
         exit
     fi
 }
@@ -60,8 +60,8 @@ function prepare_MULTIWOZ(){
     addr23="https://github.com/lexmen318/MultiWOZ-coref/archive/refs/heads/main.zip"
     addr24="https://github.com/smartyfh/MultiWOZ2.4/archive/refs/heads/main.zip"
     clear_download=$1
-    [ ! -d MultiWOZ ] && mkdir MultiWOZ
-    cd MultiWOZ
+    [ ! -d multiwoz ] && mkdir multiwoz
+    cd multiwoz
 
     [ ! -d version22 ] && mkdir version22
     cd version22
@@ -80,7 +80,10 @@ function prepare_MULTIWOZ(){
     get $addr24 master.zip $turns
     [ $clear_download = 1 ] && rm *.zip
     cd ..
-    
+    # if you want to use datasets behind, you should install git-lfs and huggingface/datasets at first
+    # the useage can be accessed in the hugging face datasets website
+    [ ! -d multiwoz_dst ] && git clone https://huggingface.co/datasets/adamlin/multiwoz_dst
+    [ ! -d multiwoz_all_versions ] && git clone https://huggingface.co/datasets/pietrolesci/multiwoz_all_versions
     cd ..
 }
 
@@ -97,7 +100,50 @@ function prepare_SIM(){
     cd ..
 }
 
-# prepare_DSTC 1
-# prepare_SIM 1
-prepare_MULTIWOZ 1
+function prepare_SGD(){
+    addr="https://github.com/google-research-datasets/dstc8-schema-guided-dialogue/archive/refs/heads/master.zip"
+    clear_download=$1
+    [ ! -d sgd ] && mkdir sgd
+    cd sgd
+    get $addr master.zip $turns
+    unzip -oq master.zip
+    mv dstc8-schema-guided-dialogue-master/* .
+    rm -rf dstc8-schema-guided-dialogue-master
+    [ $clear_download = 1 ] && rm *.zip
+    cd ..
+}
 
+function prepare_CROSSWOZ(){
+    addr="https://github.com/thu-coai/CrossWOZ/archive/refs/heads/master.zip"
+    clear_download=$1
+    [ ! -d crosswoz ] && mkdir crosswoz
+    cd crosswoz
+    get $addr master.zip $turns
+    unzip -oq master.zip
+    mv CrossWOZ-master/* .
+    rm -rf CrossWOZ-master
+    [ $clear_download = 1 ] && rm *.zip
+    cd ..
+}
+
+function prepare_RISAWOZ(){
+    addr="https://github.com/terryqj0107/RiSAWOZ/archive/refs/heads/master.zip"
+    clear_download=$1
+    [ ! -d risawoz ] && mkdir risawoz
+    cd risawoz
+    get $addr master.zip $turns
+    unzip -oq master.zip
+    mv RiSAWOZ-master/* .
+    rm -rf RiSAWOZ-master
+    [ $clear_download = 1 ] && rm *.zip
+    cd ..
+}
+
+
+
+prepare_DSTC 1
+prepare_SIM 1
+prepare_MULTIWOZ 1
+prepare_SGD 1
+prepare_CROSSWOZ 1
+prepare_RISAWOZ 1
