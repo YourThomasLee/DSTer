@@ -5,6 +5,8 @@ import torch
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 from torch.nn.utils.rnn import pad_sequence
+import numpy as np
+import random
 
 from base import BaseDataLoader
 from copy import deepcopy as dc
@@ -115,3 +117,13 @@ class MultiWOZDataLoader(DataLoader):
 #  from transformers import AutoModelForSequenceClassification, AutoTokenizer
 # model = AutoModelForSequenceClassification.from_pretrained("bert-base-uncased")
 # tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+
+def worker_init_fn(worker_id):
+    worker_seed = torch.initial_seed() % 2**32
+    np.random.seed(worker_seed)
+    random.seed(worker_seed)
+
+class WOZDataLoader(DataLoader):
+    def __init__(self, path):
+        pass
+

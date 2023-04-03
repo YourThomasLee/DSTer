@@ -6,7 +6,7 @@ import argparse
 import collections
 import numpy as np
 import torch
-
+import random
 
 # user library
 from utils.parse_config import ConfigParser
@@ -16,11 +16,15 @@ from test import test
 
 
 # fix random seeds for reproducibility
-SEED = 42
-torch.manual_seed(SEED)
-torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = False
-np.random.seed(SEED)
+def set_seed(seed=42):
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        torch.set_deterministic(True)
 
 def main(config):
     """

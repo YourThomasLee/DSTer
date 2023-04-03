@@ -170,8 +170,6 @@ class MultiWOZ:
         self.vali_data = Datapool(vali_data, self.text_vocab, ontology, state_domain_card)
         self.test_data = Datapool(test_data, self.text_vocab, ontology, state_domain_card)
         
-    
-        
     def process_ontology(self, onto_file_name):
         """
         process given ontology
