@@ -1,0 +1,78 @@
+{
+    "name": "DSTModel",
+    "n_gpu": 1,
+    "device": "cuda",
+    "arch": {
+        "type": "DSTModel",
+        "args": {
+            "text_vocab_size": 17500,
+            "domain_slots": ["attraction-area", "attraction-name", "attraction-type", "bus-day", "bus-departure", "bus-destination", 
+                "bus-leave at", "hospital-department", "hotel-area", "hotel-book day", "hotel-book people", "hotel-book stay", 
+                "hotel-internet", "hotel-name", "hotel-parking", "hotel-price range", "hotel-stars", "hotel-type", "restaurant-area", 
+                "restaurant-book day", "restaurant-book people", "restaurant-book time", "restaurant-food", "restaurant-name", 
+                "restaurant-price range", "taxi-arrive by", "taxi-departure", "taxi-destination", "taxi-leave at", "train-arrive by", 
+                "train-book people", "train-day", "train-departure", "train-destination", "train-leave at"],
+            "state_label_num": 35,
+            "state_domain_card": [6, 158, 27, 1, 1, 4, 1, 48, 6, 11, 8, 8, 3, 78, 4, 6, 7, 3, 6, 8, 8, 66, 103, 182, 4, 97, 255, 251, 
+            108, 156, 12, 8, 31, 27, 201],
+            "d_model": 64,
+            "padding_idx": 0,
+            "dropout": 0.2,
+            "attn_heads": 4
+        }
+    },
+    "data_loader": {
+        "type": "MultiWOZDataLoader",
+        "args":{
+            "original_data_dir": "data/MultiWOZ2.1",
+            "data_dir": "data",
+            "batch_size": 128,
+            "shuffle": true,
+            "validation_split": 0.1,
+            "num_workers": 4,
+            "state_domain_card": [6, 158, 27, 1, 1, 4, 1, 48, 6, 11, 8, 8, 3, 78, 4, 6, 7, 3, 6, 8, 8, 66, 103, 182, 4, 97, 255, 251, 
+            108, 156, 12, 8, 31, 27, 201]
+        }
+    },
+    "optimizer": {
+        "type": "Adam",
+        "args":{
+<<<<<<< HEAD
+            "lr": 0.001,
+=======
+            "lr": 0.00025,
+>>>>>>> 8ca5872 (add scheduler.py)
+            "weight_decay": 0,
+            "amsgrad": true
+        }
+    },
+    "loss": "cross_entropy",
+    "metrics": [
+        "joint_accuracy"
+    ],
+    "scheduler": {
+        "type": "NoamLR",
+        "args": {
+<<<<<<< HEAD
+            "step_size": 50,
+            "gamma": 0.05
+=======
+            "model_size": 64,
+            "factor": 0.8,
+            "warmup_steps": 4000
+>>>>>>> 8ca5872 (add scheduler.py)
+        }
+    },
+    "trainer": {
+        "epochs": 50,
+
+        "save_dir": "saved/",
+        "save_period": 1,
+        "verbosity": 2,
+
+        "monitor": "min val_loss",
+        "early_stop": 5,
+
+        "tensorboard": true
+    }
+}
