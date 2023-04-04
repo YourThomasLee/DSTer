@@ -11,4 +11,4 @@ I would like to split my work into three parts:
 ## Dialogue state tracking 
 Dialogue state tracking, sometimes called belief tracking, refers to accurately estimating the user's goal as a dialog progresses. Accurate state tracking is desirable because it provides robustness to errors in speech recognition, and helps reduce ambiguity inherent in language within a temporal process like dialog.
 
-I just want to develop my first version of DST tracker base on hugging face and transformer package. I can consult it's usage on [link0](https://huggingface.co/docs/datasets/quickstart), [link1](https://blog.csdn.net/wtfloser/article/details/118291721).
+I just want to develop my first version of DST tracker base on hugging face and transformer package. I can consult it's usage on [link0](https://huggingface.co/docs/datasets/quickstart), [link1](https://huggingface.co/docs/tokenizers/quicktour).
