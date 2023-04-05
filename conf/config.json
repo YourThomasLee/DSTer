@@ -22,26 +22,18 @@
         }
     },
     "data_loader": {
-        "type": "MultiWOZDataLoader",
+        "type": "WOZDataLoader",
         "args":{
-            "original_data_dir": "data/MultiWOZ2.1",
-            "data_dir": "data",
-            "batch_size": 128,
+            "data_dir": "./data/multiwoz/multiwoz_dst",
+            "batch_size": 64,
             "shuffle": true,
-            "validation_split": 0.1,
-            "num_workers": 4,
-            "state_domain_card": [6, 158, 27, 1, 1, 4, 1, 48, 6, 11, 8, 8, 3, 78, 4, 6, 7, 3, 6, 8, 8, 66, 103, 182, 4, 97, 255, 251, 
-            108, 156, 12, 8, 31, 27, 201]
+            "num_workers": 4
         }
     },
     "optimizer": {
         "type": "Adam",
         "args":{
-<<<<<<< HEAD
-            "lr": 0.001,
-=======
             "lr": 0.00025,
->>>>>>> 8ca5872 (add scheduler.py)
             "weight_decay": 0,
             "amsgrad": true
         }
@@ -53,23 +45,18 @@
     "scheduler": {
         "type": "NoamLR",
         "args": {
-<<<<<<< HEAD
             "step_size": 50,
-            "gamma": 0.05
-=======
+            "gamma": 0.05,
             "model_size": 64,
             "factor": 0.8,
             "warmup_steps": 4000
->>>>>>> 8ca5872 (add scheduler.py)
         }
     },
     "trainer": {
         "epochs": 50,
-
         "save_dir": "saved/",
         "save_period": 1,
         "verbosity": 2,
-
         "monitor": "min val_loss",
         "early_stop": 5,
 

@@ -114,16 +114,54 @@ class MultiWOZDataLoader(DataLoader):
         return DataLoader(dataset = self.datasets.vali_data, **self.init_kwargs)
 
 
-#  from transformers import AutoModelForSequenceClassification, AutoTokenizer
-# model = AutoModelForSequenceClassification.from_pretrained("bert-base-uncased")
-# tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+class MnistDataLoader(BaseDataLoader):
+    """
+    MNIST data loading demo using BaseDataLoader
+    """
+    def __init__(self, data_dir, batch_size, shuffle=True, validation_split=0.0, num_workers=1, training=True):
+        trsfm = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,))
+        ])
+        self.data_dir = data_dir
+        self.dataset = datasets.MNIST(self.data_dir, train=training, download=True, transform=trsfm)
+        super().__init__(self.dataset, batch_size, shuffle, validation_split, num_workers)
+
+
+import datasets
+from transformers import AutoTokenizer, AddedToken
+from torch.utils.data.sampler import BatchSampler, RandomSampler, SequentialSampler
+tokenizer = AutoTokenizer.from_pretrained("bert-base-cased")
 
 def worker_init_fn(worker_id):
     worker_seed = torch.initial_seed() % 2**32
     np.random.seed(worker_seed)
     random.seed(worker_seed)
 
-class WOZDataLoader(DataLoader):
-    def __init__(self, path):
-        pass
+def collate_woz(batch):
 
+
+    with torch.no_grad():
+        history_text = pad_sequence([torch.tensor(item['history_text'], dtype=int) for item in batch],batch_first=True, padding_value=0)
+        history_text_mask = (history_text == 0).unsqueeze(-2)
+
+
+class WOZDataLoader(BaseDataLoader):
+    """
+    Base class for all data loaders
+    """
+    def __init__(self, data_dir, batch_size, shuffle, validation_split=0.1, num_workers=1, training=True):
+        self.data_dir = data_dir
+        dataset = datasets.load_dataset(path=data_dir, split="train") # train dataset
+        validation = datasets.load_dataset(path=data_dir, split="validation") # validation dataset
+        self.train_sampler = BatchSampler(RandomSampler(dataset), batch_size=batch_size, drop_last=False)
+        self.valid_sampler = BatchSampler(SequentialSampler(validation), batch_size=batch_size, drop_last=False)
+        super().__init__(self, dataset, batch_size, shuffle, validation_split, num_workers, collate_fn=collate_woz)
+
+    def add_tokens(self, token_list):
+        for it in token_list:
+            self.tokenizer.add_tokens(AddedToken(content=it, single_world=False))
+            # self.tokenizer.add_tokens("[special_token]")
+
+    def _split_sampler(self, split):
+        return self.train_sampler, self.valid_sampler
