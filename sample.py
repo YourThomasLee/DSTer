@@ -1,14 +1,16 @@
 # -*- encoding: utf-8 -*-
-from transformers import AutoModelForSequenceClassification, AutoTokenizer, AddedToken
+from transformers import AutoModel, AutoTokenizer, AddedToken
 from torch.utils.data import DataLoader
 from datasets import load_dataset
 import torch
 
 # dataset = load_dataset("glue", "mrpc", split="train")
-tokenizer = AutoTokenizer.from_pretrained("bert-base-cased")
+tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 tokenizer.add_tokens(["<gogogo>"]) # 定义特殊单词
 tokenizer.add_tokens(AddedToken(content="[You are good]", single_word=False))
 # model = AutoModelForSequenceClassification.from_pretrained("bert-base-cased")
+model = AutoModel.from_pretrained("bert-base-uncased")
+
 s1 = "you are successful in doing something while you fail to some other things"
 s2 = "you are right, but there is nothing useful!"
 

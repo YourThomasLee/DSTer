@@ -16,3 +16,4 @@ I just want to develop my first version of DST tracker base on hugging face and 
 
 useful links:
 - [Using Bert to implement name entity recognition](https://zhuanlan.zhihu.com/p/567920519)
+- [Develop text CNN basd on Bert output](https://www.likecs.com/ask-3448006.html)
