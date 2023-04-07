@@ -1,5 +1,5 @@
 # -*- encoding: utf-8 -*-
-from transformers import AutoModel, AutoTokenizer, AddedToken
+from transformers import AutoModel, AutoTokenizer, AddedToken, BertForTokenClassification
 from torch.utils.data import DataLoader
 from datasets import load_dataset
 import torch
@@ -14,10 +14,11 @@ model = AutoModel.from_pretrained("bert-base-uncased")
 s1 = "you are successful in doing something while you fail to some other things"
 s2 = "you are right, but there is nothing useful!"
 
-
 # def encode(examples):
 #     return tokenizer(examples["sentence1"], examples["sentence2"], truncation=True, padding="max_length")
-print("\n", tokenizer([s1, s2], truncation=True, padding=True, return_tensors="pt"))
+# print("\n", tokenizer(s1, truncation=True, padding=True, return_tensors="pt"))
+input = tokenizer([s1, s2], truncation=True, padding=True, return_tensors="pt")
+print(model(input['input_ids']).last_hidden_state.shape, input['input_ids'].shape)
 # dataset.map(encode, batched=True)
 # print(dataset[0])
 # rename the label colum to labels
