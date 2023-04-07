@@ -117,37 +117,107 @@ class MultiWOZDataLoader(DataLoader):
 import datasets
 from transformers import AutoTokenizer, AddedToken
 from torch.utils.data.sampler import BatchSampler, RandomSampler, SequentialSampler
-tokenizer = AutoTokenizer.from_pretrained("bert-base-cased")
+
 
 def worker_init_fn(worker_id):
     worker_seed = torch.initial_seed() % 2**32
     np.random.seed(worker_seed)
     random.seed(worker_seed)
-
-def collate_woz(batch):
-
-
-    with torch.no_grad():
-        history_text = pad_sequence([torch.tensor(item['history_text'], dtype=int) for item in batch],batch_first=True, padding_value=0)
-        history_text_mask = (history_text == 0).unsqueeze(-2)
-
-
+tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 class WOZDataLoader(BaseDataLoader):
     """
-    Base class for all data loaders
+    original data schema:
+        dialogue_id,string
+        turn_id,int
+        sys_utt,string
+        usr_utt,string
+        states_21,dict
+        states_22,dict
+        states_23,dict
+        states_24,dict
+    preprocess:
+        remove_last_turn
+        remove_empty_state
+        generate_dialogue_history => context
+        generate_previous_state => prev_states
     """
-    def __init__(self, data_dir, batch_size, shuffle, validation_split=0.1, num_workers=1, training=True):
-        self.data_dir = data_dir
-        dataset = datasets.load_dataset(path=data_dir, split="train") # train dataset
-        validation = datasets.load_dataset(path=data_dir, split="validation") # validation dataset
+    def __init__(self, data_dir, batch_size, shuffle, validation_split=0.1, num_workers=1, dialogue_history_pool= 5, version=23, training=True):
+        dataset = self.preprocess(datasets.load_dataset(path=data_dir, split="train" if training else "test"), dialogue_history_pool, version=version) # train dataset
+        validation = self.preprocess(datasets.load_dataset(path=data_dir, split="validation"), dialogue_history_pool, version=version) # validation dataset
+        self.add_tokens(['[end of text]'])
         self.train_sampler = BatchSampler(RandomSampler(dataset), batch_size=batch_size, drop_last=False)
         self.valid_sampler = BatchSampler(SequentialSampler(validation), batch_size=batch_size, drop_last=False)
-        super().__init__(self, dataset, batch_size, shuffle, validation_split, num_workers, collate_fn=collate_woz)
+        super().__init__(self, dataset, batch_size, shuffle, validation_split, num_workers, collate_fn=self.collate_woz)
 
     def add_tokens(self, token_list):
         for it in token_list:
-            self.tokenizer.add_tokens(AddedToken(content=it, single_world=False))
+            tokenizer.add_tokens(AddedToken(content=it, single_world=False))
             # self.tokenizer.add_tokens("[special_token]")
 
     def _split_sampler(self, split):
         return self.train_sampler, self.valid_sampler
+    
+    def preprocess(data, max_hist_len = 5, version = 22):
+        data_idx = dict()
+        for idx, turn in enumerate(data):
+            # remove last turn that usr_utt is none
+            if turn['usr_utt'] == 'none': 
+                continue
+            # remove empty state
+            if turn['states_dict21'] == None:
+                continue
+            k = turn["dialogue_id"]
+            if k not in data_idx: data_idx[k] = list()
+            assert(turn['turn_id'] > data_idx[k][-1])
+            data_idx[k].append(idx)
+        
+        data_ret = list()
+        for d in data_idx:
+            context = list()
+            prev = None
+            for t, idx in enumerate(data_idx[d]):
+                turn = data[idx]
+                sys_utt = "none"
+                assert(turn["usr_utt"] != "none")
+                data_ret.append({
+                    "dialogue_id": d,
+                    "turn_id": t,
+                    "context": "".join(context[-max_hist_len:]),
+                    "sys_utt": sys_utt,
+                    "usr_utt": turn["usr_utt"],
+                    "prev_states": prev if prev is not None else {k: "none" for k in turn["states_" + str(version)]},
+                    "states": turn["states_" + str(version)],
+                })
+                prev = turn["states_" + str(version)]
+                context.append(sys_utt + " [end of text] " + turn["usr_utt"] +" [end of text]")
+        return data_ret
+
+
+    def collate_woz(batch):
+        # dialogue_id, turn_id, context, sys_utt, usr_utt, 
+        # prev_states, states
+        #str data
+        dial_id = [item['dial_id'] for item in batch]
+        turn_id = [item['turn_id'] for item in batch]
+        f = lambda l: tokenizer(l, truncation=True, padding=True, return_tensor = "pt")
+        with torch.no_grad():
+            context_tokens = f([item["context"] for item in batch])
+            usr_utt_tokens = f([item["usr_utt"] for item in batch])
+            sys_utt_tokens = f([item["sys_utt"] for item in batch])
+            states = f([list(item["states"].keys()) for item in batch])
+            
+            
+        
+    
+        return {
+            "dial_id": dial_id,
+            "turn_id": turn_id,
+            "previous_state": previous_state,
+            "current_state": current_state,
+            "history_text": history_text,
+            "history_text_mask": history_text_mask,
+            "history_roles": history_roles,
+            "current_text": current_text,
+            "current_text_mask": current_text_mask,
+            "current_roles": current_roles,
+        }

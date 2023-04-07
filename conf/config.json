@@ -5,7 +5,6 @@
     "arch": {
         "type": "DSTModel",
         "args": {
-            "text_vocab_size": 17500,
             "domain_slots": ["attraction-area", "attraction-name", "attraction-type", "bus-day", "bus-departure", "bus-destination", 
                 "bus-leave at", "hospital-department", "hotel-area", "hotel-book day", "hotel-book people", "hotel-book stay", 
                 "hotel-internet", "hotel-name", "hotel-parking", "hotel-price range", "hotel-stars", "hotel-type", "restaurant-area", 
@@ -24,8 +23,8 @@
     "data_loader": {
         "type": "WOZDataLoader",
         "args":{
-            "data_dir": "./data/multiwoz/multiwoz_dst",
-            "batch_size": 64,
+            "data_dir": "pietrolesci/multiwoz_all_versions",
+            "batch_size": 32,
             "shuffle": true,
             "num_workers": 4
         }
