@@ -17,13 +17,11 @@ Here I listed public datasets that are designed for dialogue state tracking eval
 - [CrossWOZ](https://github.com/thu-coai/CrossWOZ):
 - [RiSAWOZ](https://github.com/terryqj0107/RiSAWOZ)：
 
-Actually there are already some excellent data loader to datasets above. As a result, I choose to use the existing version of data loader of huggingface. For those datasets which was not yes supported by hugging face, I plan to provide the supplement codes at my leisure time. I will post it after I commit it
-
-data loader for MultiWOZ:  
-
+and there are already data loaders for MultiWOZ:  
 - [multi-woz2.2 loader](https://huggingface.co/datasets/multi_woz_v22)
 - [multiwoz_dst](https://huggingface.co/datasets/adamlin/multiwoz_dst)
 - [multiwoz_all_versions](https://huggingface.co/datasets/pietrolesci/multiwoz_all_versions/tree/main)
+
 
 Leader board: [multi-woz 2.0](https://paperswithcode.com/sota/multi-domain-dialogue-state-tracking-on); [multi-woz 2.1](https://paperswithcode.com/sota/multi-domain-dialogue-state-tracking-on-1); [multi-woz 2.2](https://paperswithcode.com/sota/multi-domain-dialogue-state-tracking-on-2)
 
@@ -31,15 +29,12 @@ Leader board: [multi-woz 2.0](https://paperswithcode.com/sota/multi-domain-dialo
 
 file description:
 
-- `prepare_env.sh`: fetch datasets from network space (you should make sure that your configuration of git account is correct, because this script depends it) 
-
-- `dialogue_data.py`: this python script provides a common interface to get the data in the same way, so that you can use different versions/types of dataset like:
+- `prepare_env.sh`: fetch datasets from network space (you should make sure that your configuration of git account is correct, because this script depends it. Sometimes this file fails to fetch files from github for the network situation. Taking it into consideration, I recommend you run it in debug mode `sh -x prepare_env.sh`) 
+- `./multiwoz/multiwoz.py`: this python script provides a common interface to get MultiWOZ dataset in an unified way, so that you can use different versions/types of dataset as following: 
   
   ```python
-  from data import dialogue_data
-  name = "MultiWOZ"
-  version = "2.0"
-  data = dialogue_data(name, version)
+  from datasets import load_dataset
+  data = dialogue_data("./data/multiwoz/", "conf22")
   ```
 
 

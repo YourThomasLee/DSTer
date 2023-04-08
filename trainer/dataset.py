@@ -1,4 +1,3 @@
-#!/usr/bin python
 #-*- encoding: utf-8 -*-
 
 from turtle import ontimer
@@ -111,9 +110,6 @@ class MultiWOZ:
     woz data url: https://github.com/budzianowski/multiwoz.git
     dialogue state tracking: 
         formulation: $State_n = f(State_{n-1}, history_{n-1}, utterance_{n}, action_{n-1})$
-    data formulation: previous_state, dialogue history, utterance, previous_action, cur_state
-    torchtext usage example: 
-        1. torchdata: https://github.com/pytorch/data
     task description: 
         数据: 领域, 槽位, 领域候选数据(正排数据如何组织, 依赖关系如何建模)
         机制设计: 对话状态系统机制的设计(数据交融, 模型设计和推理, 线上如何使用, 在线如何训练)
@@ -122,6 +118,7 @@ class MultiWOZ:
     # 对话中只有系统话语包含了对话动作的标注, 用户话语无动作标注
     # police/hospital领域包含很少的样本, 因为这两个领域的标注过于简单, 同时验证集和测试集没有这两个领域的样本
 
+    
     从ontology diff 上看， 2.1版本的标签数据基本能对上了，但2.0版本的标签还有很多的噪声，考虑跑完模型再清洗一遍标签
     """
     def __init__(self, 

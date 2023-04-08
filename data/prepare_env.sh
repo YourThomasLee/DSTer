@@ -66,24 +66,36 @@ function prepare_MULTIWOZ(){
     [ ! -d version22 ] && mkdir version22
     cd version22
     get $addr22 master.zip $turns
+    mv multiwoz-master/* .
+    rm -rf multiwoz-master
     [ $clear_download = 1 ] && rm *.zip
     cd ..
 
     [ ! -d version23 ] && mkdir version23
     cd version23
-    get $addr23 master.zip $turns
+    get $addr23 main.zip $turns
+    mv MultiWOZ-coref-main/* .
+    rm -rf MultiWOZ-coref-main
+    unzip -oq MultiWOZ2_3.zip
+    mv MultiWOZ2_3/* .
+    rm -rf MultiWOZ2_3
     [ $clear_download = 1 ] && rm *.zip
     cd ..
     
     [ ! -d version24 ] && mkdir version24
     cd version24
-    get $addr24 master.zip $turns
+    get $addr24 main.zip $turns
+    mv MULTIWOZ2.4-main/* .
+    rm -rf MULTIWOZ2.4-main
+    cd data
+    unzip -oq MULTIWOZ2.4.zip
+    mv MULTIWOZ2.4/* .
+    rm -rf MULTIWOZ2.4
+    rm *.zip
+    cd ..
     [ $clear_download = 1 ] && rm *.zip
     cd ..
-    # if you want to use datasets behind, you should install git-lfs and huggingface/datasets at first
-    # the useage can be accessed in the hugging face datasets website
-    [ ! -d multiwoz_dst ] && git clone https://huggingface.co/datasets/adamlin/multiwoz_dst
-    [ ! -d multiwoz_all_versions ] && git clone https://huggingface.co/datasets/pietrolesci/multiwoz_all_versions
+    
     cd ..
 }
 

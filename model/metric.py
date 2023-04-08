@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+from trainer.data_loaders import state_value_domain, tokenizer
 
 def joint_accuracy(output, target):
     def comput_joint_acc(pred, label):

@@ -4,7 +4,9 @@ from torch.utils.data import DataLoader
 from datasets import load_dataset
 import torch
 
-# dataset = load_dataset("pietrolesci/multiwoz_all_versions", split="test")
+dataset = load_dataset("./data/multiwoz")
+print(dataset)
+exit(0)
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 tokenizer.add_tokens(["<gogogo>"]) # 定义特殊单词
 tokenizer.add_tokens(AddedToken(content="[You are good]", single_word=False))

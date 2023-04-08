@@ -23,10 +23,12 @@
     "data_loader": {
         "type": "WOZDataLoader",
         "args":{
-            "data_dir": "pietrolesci/multiwoz_all_versions",
+            "data_dir": "multiwoz",
             "batch_size": 32,
             "shuffle": true,
-            "num_workers": 4
+            "num_workers": 4,
+            "num_context_turns":5,
+            "training": true
         }
     },
     "optimizer": {
