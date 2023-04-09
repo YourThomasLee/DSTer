@@ -120,14 +120,44 @@ from transformers import AutoTokenizer, AddedToken
 from torch.utils.data.sampler import BatchSampler, RandomSampler, SequentialSampler
 
 
+tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+state_value_domain = dict()
+is_exist_state_value_domain = False
+
+def collate_woz(batch):
+    # dialogue_id, turn_id, context, sys_utt, usr_utt, 
+    # prev_states, states
+    #str data
+    dial_id = [item['dialogue_id'] for item in batch]
+    turn_id = [item['turn_id'] for item in batch]
+    f = lambda l: tokenizer(l, truncation=True, padding=True, return_tensor = "pt")
+    with torch.no_grad():
+        context_tokens = f([item["context"] for item in batch])
+        usr_utt_tokens = f([item["usr_utt"] for item in batch])
+        sys_utt_tokens = f([item["sys_utt"] for item in batch])
+        states_text = f([k.replace("-", " ") for k in batch[0]["states"].keys()]) # state_text
+        cur_state_values = {k:[it["states"][k][0] if len(it[k]) > 0 else "none" for it in batch] for k in batch[0]["states"].keys()} # label -> label embedding
+        pre_state_values = {k:[it["prev_states"][k][0] if len(it["prev_states"][k]) > 0 else "none" for it in batch] for k in batch[0]["prev_states"].keys()} # label -> label embedding
+    return {
+        "dialogue_id": dial_id,
+        "turn_id": turn_id,
+        "context_ids": context_tokens["input_ids"],
+        "context_mask": context_tokens["attention_mask"],
+        "usr_utt_ids": usr_utt_tokens["input_ids"],
+        "usr_utt_mask": usr_utt_tokens["attention_mask"],
+        "sys_utt_ids": sys_utt_tokens["input_ids"],
+        "sys_utt_mask": sys_utt_tokens["attention_mask"],
+        "state_text": states_text["input_ids"],
+        "state_mask": states_text["attention_mask"],
+        "cur_state_tokens": cur_state_values,
+        "pre_state_values": pre_state_values
+    }
+
 def worker_init_fn(worker_id):
     worker_seed = torch.initial_seed() % 2**32
     np.random.seed(worker_seed)
     random.seed(worker_seed)
 
-tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-state_value_domain = dict()
-is_exist_state_value_domain = False
 class WOZDataLoader(BaseDataLoader):
     """
     original data schema:
@@ -145,105 +175,27 @@ class WOZDataLoader(BaseDataLoader):
         generate_dialogue_history => context
         generate_previous_state => prev_states
     """
-    def __init__(self, data_dir, batch_size, shuffle, validation_split=0.1, num_workers=1, dialogue_history_pool= 5, version=23, training=True):
+    def __init__(self, data_dir, batch_size, shuffle, validation_split=0.1, num_workers=1, num_context_turns= 5, version="21", training=True):
         global state_value_domain, is_exist_state_value_domain
         if os.path.exists("./data/multiwoz/state_value_domain_%s.json" % version):
            state_value_domain = json.load(open("./data/multiwoz/state_value_domain_%s.json" % version, "r"))
         is_exist_state_value_domain = False if len(state_value_domain) == 0 else True
-        dataset = self.preprocess(datasets.load_dataset(path=data_dir, split="train" if training else "test"), dialogue_history_pool, version) # train dataset
-        validation = self.preprocess(datasets.load_dataset(path=data_dir, split="validation"), dialogue_history_pool, version) # validation dataset
-        self.add_tokens(['[end of text]'])
-        self.train_sampler = BatchSampler(RandomSampler(dataset), batch_size=batch_size, drop_last=False)
-        self.valid_sampler = BatchSampler(SequentialSampler(validation), batch_size=batch_size, drop_last=False)
-        super().__init__(self, dataset, batch_size, shuffle, validation_split, num_workers, collate_fn=self.collate_woz)
+        
+        dataset = datasets.load_dataset(path=data_dir, name="conf" + version, split="train" if training else "test")
+        val_dataset = datasets.load_dataset(path=data_dir, name="conf" + version, split="validation")
+        self.sampler = BatchSampler(RandomSampler(dataset), batch_size=batch_size, drop_last=False)
+        self.valid_sampler = BatchSampler(SequentialSampler(val_dataset), batch_size=batch_size, drop_last=False)
+        self.add_tokens(['[end of system text]', '[end of user text]'])
+        super().__init__(dataset, batch_size, shuffle, validation_split, num_workers, collate_fn=collate_woz, worker_init_fn=worker_init_fn)
         
         if not os.path.exists("./data/multiwoz/state_value_domain_%s.json" % version):
-           json.dump(open("./data/multiwoz/state_value_domain_%s.json" % version, "w"), state_value_domain)
+           json.dump(state_value_domain, open("./data/multiwoz/state_value_domain_%s.json" % version, "w"))
 
     def add_tokens(self, token_list):
         for it in token_list:
-            tokenizer.add_tokens(AddedToken(content=it, single_world=False))
+            tokenizer.add_tokens(AddedToken(content=it, single_word=True))
             # self.tokenizer.add_tokens("[special_token]")
 
     def _split_sampler(self, split):
-        return self.train_sampler, self.valid_sampler
-    
-    def preprocess(self, data, max_hist_len = 5, version = 22):
-        global state_value_domain, is_exist_state_value_domain
-        data_idx = dict()
-        for idx, turn in enumerate(data):
-            # remove last turn that usr_utt is none
-            if turn['usr_utt'] == 'none': 
-                continue
-            # remove empty state
-            if turn['states_%s' % version] == None:
-                continue
-            k = turn["dialogue_id"]
-            if k not in data_idx: 
-                data_idx[k] = [idx]
-                continue
-            prev_turn_idx = data_idx[k][-1]
-            assert(turn['turn_id'] > data[prev_turn_idx]["turn_id"])
-            data_idx[k].append(idx)
-        
-        data_ret = list()
-        for d in data_idx:
-            context = list()
-            prev = None
-            for t, idx in enumerate(data_idx[d]):
-                turn = data[idx]
-                sys_utt = "none"
-                assert(turn["usr_utt"] != "none")
-                data_ret.append({
-                    "dialogue_id": d,
-                    "turn_id": t,
-                    "context": "".join(context[-max_hist_len:]),
-                    "sys_utt": sys_utt,
-                    "usr_utt": turn["usr_utt"],
-                    "prev_states": prev if prev is not None else {k: "none" for k in turn["states_" + str(version)]},
-                    "states": turn["states_" + str(version)],
-                })
-                prev = turn["states_" + str(version)]
-                context.append(sys_utt + " [end of text] " + turn["usr_utt"] +" [end of text]")
-                if is_exist_state_value_domain:
-                    continue
-                # collect all possible values of state labels
-                for k,v in turn["states_" + str(version)].items():
-                    if k not in state_value_domain: 
-                        state_value_domain[k] = defaultdict()
-                    try:
-                        state_value_domain[k][v] += 1
-                    except:
-                        import pdb
-                        pdb.set_trace()
-        return data_ret
+        return self._train_sampler, self._valid_sampler
 
-
-    def collate_woz(batch):
-        # dialogue_id, turn_id, context, sys_utt, usr_utt, 
-        # prev_states, states
-        #str data
-        dial_id = [item['dialogue_id'] for item in batch]
-        turn_id = [item['turn_id'] for item in batch]
-        f = lambda l: tokenizer(l, truncation=True, padding=True, return_tensor = "pt")
-        with torch.no_grad():
-            context_tokens = f([item["context"] for item in batch])
-            usr_utt_tokens = f([item["usr_utt"] for item in batch])
-            sys_utt_tokens = f([item["sys_utt"] for item in batch])
-            states_text = f([k.replace("-", " ") for k in batch[0]["states"].keys()]) # state_text
-            cur_state_values = {k:[it[k] for it in batch] for k in batch[0]["states"].keys()} # label -> label embedding
-            pre_state_values = {k:[it[k] for it in batch] for k in batch[0]["prev_states"].keys()} # label -> label embedding
-        return {
-            "dialogue_id": dial_id,
-            "turn_id": turn_id,
-            "context_ids": context_tokens["input_ids"],
-            "context_mask": context_tokens["attention_mask"],
-            "usr_utt_ids": usr_utt_tokens["input_ids"],
-            "usr_utt_mask": usr_utt_tokens["attention_mask"],
-            "sys_utt_ids": sys_utt_tokens["input_ids"],
-            "sys_utt_mask": sys_utt_tokens["attention_mask"],
-            "state_text": states_text["input_ids"],
-            "state_mask": states_text["attention_mask"],
-            "cur_state_tokens": cur_state_values,
-            "pre_state_values": pre_state_values
-        }
