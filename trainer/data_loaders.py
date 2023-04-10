@@ -16,6 +16,8 @@ import json
 from utils import util
 from trainer.dataset import MultiWOZ
 
+SCHEMA_22_PATH = "./data/multiwoz/version22/data/MultiWOZ_2.2/schema.json"
+
 class MnistDataLoader(BaseDataLoader):
     """
     MNIST data loading demo using BaseDataLoader
@@ -124,10 +126,20 @@ tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 state_value_domain = dict()
 is_exist_state_value_domain = False
 
+def load_domain_slot_type(file_path):
+    ret = dict()
+    schema = json.load(open(file_path))
+    for d in schema:
+        for s in d["slots"]:
+            k = s["name"]
+            ret[k] = s["is_categorical"]
+    return ret
+
 def collate_woz(batch):
     # dialogue_id, turn_id, context, sys_utt, usr_utt, 
     # prev_states, states
     #str data
+    
     dial_id = [item['dialogue_id'] for item in batch]
     turn_id = [item['turn_id'] for item in batch]
     f = lambda l: tokenizer(l, truncation=False, padding=True, return_tensors = "pt")
@@ -135,7 +147,7 @@ def collate_woz(batch):
         ret = {}
         for turn in batch:
             for k,v in zip(turn[key_str]["slot_name"], turn[key_str]["slot_value"]):
-                if k not in prev_states:
+                if k not in ret:
                     ret[k] = list()
                 ret[k].append("none" if len(v) == 0 else v[0])
         return ret
@@ -144,10 +156,12 @@ def collate_woz(batch):
         context_tokens = f([item["context"] for item in batch])
         usr_utt_tokens = f([item["usr_utt"] for item in batch])
         sys_utt_tokens = f([item["sys_utt"] for item in batch])
-        states_text = f([k.replace("-", " ") for k in batch[0]["states"].keys()]) # state_text
+        states_text = f([k.replace("-", " ") for k in batch[0]["states"]["slot_name"]]) # state_text
         cur_states = transform_state(batch, "states") # label -> label embedding
         prev_states = transform_state(batch, "prev_states")# label -> label embedding
-    
+    if len(cur_states.keys()) != 30:
+        import pdb 
+        pdb.set_trace()
     return {
         "dialogue_id": dial_id,
         "turn_id": turn_id,
@@ -159,9 +173,10 @@ def collate_woz(batch):
         "sys_utt_mask": sys_utt_tokens["attention_mask"],
         "state_text": states_text["input_ids"],
         "state_mask": states_text["attention_mask"],
-        "cur_state_tokens": cur_states,
-        "pre_state_values": prev_states
+        "cur_states": cur_states,
+        "pre_states": prev_states
     }
+
 def worker_init_fn(worker_id):
     worker_seed = torch.initial_seed() % 2**32
     np.random.seed(worker_seed)
@@ -184,27 +199,26 @@ class WOZDataLoader(BaseDataLoader):
         generate_dialogue_history => context
         generate_previous_state => prev_states
     """
-    def __init__(self, data_dir, batch_size, shuffle, validation_split=0.1, num_workers=1, num_context_turns= 5, version="21", training=True):
-        global state_value_domain, is_exist_state_value_domain
-        if os.path.exists("./data/multiwoz/state_value_domain_%s.json" % version):
-           state_value_domain = json.load(open("./data/multiwoz/state_value_domain_%s.json" % version, "r"))
-        is_exist_state_value_domain = False if len(state_value_domain) == 0 else True
-        
+    def __init__(self, data_dir, batch_size, shuffle, 
+                 validation_split=0.1, num_workers=1, 
+                 version="21", training=True):
         dataset = datasets.load_dataset(path=data_dir, name="conf" + version, split="train" if training else "test")
         val_dataset = datasets.load_dataset(path=data_dir, name="conf" + version, split="validation")
-        self.sampler = BatchSampler(RandomSampler(dataset), batch_size=batch_size, drop_last=False)
-        self.valid_sampler = BatchSampler(SequentialSampler(val_dataset), batch_size=batch_size, drop_last=False)
+        train_sampler = BatchSampler(RandomSampler(dataset), batch_size=batch_size, drop_last=False)
+        test_sampler = BatchSampler(SequentialSampler(dataset), batch_size=batch_size, drop_last=False)
+        valid_sampler = BatchSampler(SequentialSampler(val_dataset), batch_size=batch_size, drop_last=False)
+        self.domain_slot_type = load_domain_slot_type(SCHEMA_22_PATH)
         self.add_tokens(['[end of system text]', '[end of user text]'])
-        super().__init__(dataset, batch_size, shuffle, validation_split, num_workers, collate_fn=collate_woz, worker_init_fn=worker_init_fn)
-        
-        if not os.path.exists("./data/multiwoz/state_value_domain_%s.json" % version):
-           json.dump(state_value_domain, open("./data/multiwoz/state_value_domain_%s.json" % version, "w"))
+        super().__init__(dataset, batch_size, shuffle, validation_split,
+                        num_workers, 
+                        train_sampler=train_sampler if training else test_sampler, 
+                        valid_sampler = valid_sampler, 
+                        collate_fn=collate_woz, 
+                        worker_init_fn=worker_init_fn)
 
     def add_tokens(self, token_list):
         for it in token_list:
             tokenizer.add_tokens(AddedToken(content=it, single_word=True))
             # self.tokenizer.add_tokens("[special_token]")
 
-    def _split_sampler(self, split):
-        return self._train_sampler, self._valid_sampler
 

@@ -28,7 +28,6 @@
             "version": "21",
             "shuffle": false,
             "num_workers": 0,
-            "num_context_turns":5,
             "training": true
         }
     },

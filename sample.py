@@ -3,10 +3,10 @@ from transformers import AutoModel, AutoTokenizer, AddedToken, BertForTokenClass
 from torch.utils.data import DataLoader
 from datasets import load_dataset
 import torch
+slot_value_counter = dict()
 
-# dataset = load_dataset("./data/multiwoz",split="train") # local dataset
-dataset = load_dataset("pietrolesci/multiwoz_all_versions",split="train")
-print(dataset)
+dataset = load_dataset("./data/multiwoz",split="train") # local dataset
+# dataset = load_dataset("pietrolesci/multiwoz_all_versions",split="train")
 
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 tokenizer.add_tokens(["<gogogo>"]) # 定义特殊单词
@@ -66,14 +66,25 @@ def collate_woz(batch):
     }
 from torch.utils.data.sampler import BatchSampler, RandomSampler
 batch_sampler = BatchSampler(RandomSampler(dataset), batch_size=32, drop_last=False)
-dataloader = DataLoader(dataset, batch_sampler=batch_sampler)#, collate_fn = collate_woz)
+dataloader = DataLoader(dataset, batch_sampler=batch_sampler, collate_fn = collate_woz)
 max_len = 0
 for idx, data in enumerate(dataloader):
-    #max_len = max(max_len, data["context_ids"].shape[1])
-    import pdb
-    pdb.set_trace()
+    max_len = max(max_len, data["context_ids"].shape[1])
+    # import pdb
+    # pdb.set_trace()
 
 print(max_len)
 
 
 
+# 37 - 35： {'bus-arrive by', 'bus-book people'}
+# train， valid中没有标签的slot
+# 'bus-arrive by': 0, 'bus-book people': 0, 'train-book ticket': 0
+# 
+# test中没有标签的slot: 
+# 'bus-leave at': 0, 'bus-destination': 0, 'bus-day': 0, 'bus-arrive by': 0, 
+# 'bus-departure': 0, 'bus-book people': 0, 'train-book ticket': 0
+# 'hospital-department': 0,
+A = ['attraction-area', 'attraction-name', 'attraction-type', 'bus-day', 'bus-departure', 'bus-destination', 'bus-leave at', 'hospital-department', 'hotel-book day', 'hotel-book people', 'hotel-book stay', 'hotel-area', 'hotel-internet', 'hotel-name', 'hotel-parking', 'hotel-price range', 'hotel-stars', 'hotel-type', 'restaurant-book day', 'restaurant-book people', 'restaurant-book time', 'restaurant-area', 'restaurant-food', 'restaurant-name', 'restaurant-price range', 'taxi-arrive by', 'taxi-departure', 'taxi-destination', 'taxi-leave at', 'train-book people', 'train-arrive by', 'train-day', 'train-departure', 'train-destination', 'train-leave at']
+B = ['taxi-leave at', 'taxi-destination', 'taxi-departure', 'taxi-arrive by', 'restaurant-food', 'restaurant-price range', 'restaurant-name', 'restaurant-area', 'restaurant-book people', 'restaurant-book day', 'restaurant-book time', 'bus-leave at', 'bus-destination', 'bus-day', 'bus-arrive by', 'bus-departure', 'bus-book people', 'hospital-department', 'hotel-name', 'hotel-area', 'hotel-parking', 'hotel-price range', 'hotel-stars', 'hotel-internet', 'hotel-type', 'hotel-book people', 'hotel-book day', 'hotel-book stay', 'attraction-type', 'attraction-name', 'attraction-area', 'train-leave at', 'train-destination', 'train-day', 'train-arrive by', 'train-departure', 'train-book people']
+print(set(B) - set(A))

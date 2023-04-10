@@ -81,7 +81,6 @@ class MultiWOZ(datasets.GeneratorBasedBuilder):
         )
     ]
     DEFAULT_CONFIG_NAME = "conf21"
-    domain_slot_type = dict()
     num_context_turn = 5
 
     def _info(self):
@@ -125,12 +124,6 @@ class MultiWOZ(datasets.GeneratorBasedBuilder):
             for line in fin.readlines():
                 tok_from, tok_to = line.replace('\n', '').split('\t')
                 replacements.append((' ' + tok_from + ' ', ' ' + tok_to + ' '))
-
-        schema = load_from_file(schema_path)
-        for d in schema:
-            for s in d["slots"]:
-                k = s["name"]
-                self.domain_slot_type[k] = s["is_categorical"]
 
         return [
             datasets.SplitGenerator(
@@ -218,6 +211,9 @@ class MultiWOZ(datasets.GeneratorBasedBuilder):
             belief_state = dict()
             normalize_slot = lambda x: "".join([" " + i.lower() if "A"<=i<="Z" else i for i in x])
             for domain, item in metadata.items():
+                if domain in ["bus", "hospital"]:
+                    # remove bus domain and hospital domain, because these domains are not advented in test datasets
+                    continue
                 for k in ["semi", "book"]:
                     for slot, value in item[k].items():
                         if k == "semi" and slot == "pricerange":
@@ -228,6 +224,9 @@ class MultiWOZ(datasets.GeneratorBasedBuilder):
                             slot = "book " + slot
                         slot = normalize_slot(slot)
                         domain_slot = domain + "-" + slot
+                        if domain_slot == "train-book ticket":
+                            # not advented in test dataset
+                            continue
                         value = normalize_state_value(domain, slot, value.strip(), replacements, remove_none=True)
                         belief_state[domain_slot] = value
             return belief_state

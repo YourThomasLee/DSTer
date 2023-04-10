@@ -17,10 +17,12 @@ def train(config):
     
     # setup data_loader instances
     data_loader = config.init_obj('data_loader', module_data)
-    valid_data_loader = data_loader.valid_sampler
+    valid_data_loader = data_loader.split_validation()
+    import pdb
     for batch_idx, data in enumerate(data_loader):
         pass
-
+    # for batch_id, data in enumerate(valid_data_loader):
+    #     pass
     print("finished"); exit(0)
     # build model architecture, then print to console
     model = config.init_obj('arch', module_arch)

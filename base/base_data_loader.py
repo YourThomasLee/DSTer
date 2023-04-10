@@ -8,7 +8,10 @@ class BaseDataLoader(DataLoader):
     """
     Base class for all data loaders
     """
-    def __init__(self, dataset, batch_size, shuffle, validation_split, num_workers, collate_fn=default_collate, worker_init_fn=None):
+    def __init__(self, dataset, batch_size, shuffle, validation_split, 
+                 num_workers, train_sampler, valid_sampler = None,
+                 collate_fn=default_collate, 
+                 worker_init_fn=None):
         self.validation_split = validation_split
         self.shuffle = shuffle
 
@@ -16,16 +19,16 @@ class BaseDataLoader(DataLoader):
         self.n_samples = len(dataset)
 
         # self.sampler, self.valid_sampler = self._split_sampler(self.validation_split)
-
+        self.valid_sampler = valid_sampler
         self.init_kwargs = {
             'dataset': dataset,
-            'batch_size': batch_size,
-            'shuffle': self.shuffle,
+            # 'batch_size': batch_size,
+            # 'shuffle': self.shuffle,
             'collate_fn': collate_fn,
             'num_workers': num_workers,
             "worker_init_fn": worker_init_fn,
         }
-        super().__init__(sampler=self.sampler, **self.init_kwargs)
+        super().__init__(batch_sampler = train_sampler, **self.init_kwargs)
 
     # def _split_sampler(self, split):
     #     if split == 0.0:
@@ -55,8 +58,8 @@ class BaseDataLoader(DataLoader):
 
     #     return train_sampler, valid_sampler
 
-    # def split_validation(self):
-    #     if self.valid_sampler is None:
-    #         return None
-    #     else:
-    #         return DataLoader(sampler=self.valid_sampler, **self.init_kwargs)
+    def split_validation(self):
+        if self.valid_sampler is None:
+            return None
+        else:
+            return DataLoader(batch_sampler=self.valid_sampler, **self.init_kwargs)
