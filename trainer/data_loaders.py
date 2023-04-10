@@ -130,14 +130,24 @@ def collate_woz(batch):
     #str data
     dial_id = [item['dialogue_id'] for item in batch]
     turn_id = [item['turn_id'] for item in batch]
-    f = lambda l: tokenizer(l, truncation=True, padding=True, return_tensor = "pt")
+    f = lambda l: tokenizer(l, truncation=False, padding=True, return_tensors = "pt")
+    def transform_state(batch, key_str):
+        ret = {}
+        for turn in batch:
+            for k,v in zip(turn[key_str]["slot_name"], turn[key_str]["slot_value"]):
+                if k not in prev_states:
+                    ret[k] = list()
+                ret[k].append("none" if len(v) == 0 else v[0])
+        return ret
+
     with torch.no_grad():
         context_tokens = f([item["context"] for item in batch])
         usr_utt_tokens = f([item["usr_utt"] for item in batch])
         sys_utt_tokens = f([item["sys_utt"] for item in batch])
         states_text = f([k.replace("-", " ") for k in batch[0]["states"].keys()]) # state_text
-        cur_state_values = {k:[it["states"][k][0] if len(it[k]) > 0 else "none" for it in batch] for k in batch[0]["states"].keys()} # label -> label embedding
-        pre_state_values = {k:[it["prev_states"][k][0] if len(it["prev_states"][k]) > 0 else "none" for it in batch] for k in batch[0]["prev_states"].keys()} # label -> label embedding
+        cur_states = transform_state(batch, "states") # label -> label embedding
+        prev_states = transform_state(batch, "prev_states")# label -> label embedding
+    
     return {
         "dialogue_id": dial_id,
         "turn_id": turn_id,
@@ -149,10 +159,9 @@ def collate_woz(batch):
         "sys_utt_mask": sys_utt_tokens["attention_mask"],
         "state_text": states_text["input_ids"],
         "state_mask": states_text["attention_mask"],
-        "cur_state_tokens": cur_state_values,
-        "pre_state_values": pre_state_values
+        "cur_state_tokens": cur_states,
+        "pre_state_values": prev_states
     }
-
 def worker_init_fn(worker_id):
     worker_seed = torch.initial_seed() % 2**32
     np.random.seed(worker_seed)

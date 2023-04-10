@@ -49,6 +49,12 @@ MAPPING_PAIR_FILE = "./version22/utils/mapping.pair"
 ## following codes are copied from multiwoz2.1 preprocess
 
 replacements = []
+def load_from_file(path):
+    ret = None
+    with open(path, "r") as fin:
+        ret = json.load(fin)
+    assert(ret is not None)
+    return ret
 
 class MultiWOZ(datasets.GeneratorBasedBuilder):
     version=datasets.Version("1.2.0"), 
@@ -120,6 +126,12 @@ class MultiWOZ(datasets.GeneratorBasedBuilder):
                 tok_from, tok_to = line.replace('\n', '').split('\t')
                 replacements.append((' ' + tok_from + ' ', ' ' + tok_to + ' '))
 
+        schema = load_from_file(schema_path)
+        for d in schema:
+            for s in d["slots"]:
+                k = s["name"]
+                self.domain_slot_type[k] = s["is_categorical"]
+
         return [
             datasets.SplitGenerator(
                 name=spl_enum,
@@ -138,19 +150,7 @@ class MultiWOZ(datasets.GeneratorBasedBuilder):
         ]
 
     def _generate_examples(self, data_path, dialogue_ids, schema_path, ontology_path):
-        
-        def load_from_file(path):
-            ret = None
-            with open(path, "r") as fin:
-                ret = json.load(fin)
-            assert(ret is not None)
-            return ret
         dialogues = load_from_file(data_path)
-        schema = load_from_file(schema_path)
-        for d in schema:
-            for s in d["slots"]:
-                k = s["name"]
-                self.domain_slot_type[k] = s["is_categorical"]
         ontology = load_from_file(ontology_path)
         id_ = -1
         res = None

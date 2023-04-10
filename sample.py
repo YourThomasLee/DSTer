@@ -4,16 +4,16 @@ from torch.utils.data import DataLoader
 from datasets import load_dataset
 import torch
 
-dataset = load_dataset("./data/multiwoz",split="train")
+# dataset = load_dataset("./data/multiwoz",split="train") # local dataset
+dataset = load_dataset("pietrolesci/multiwoz_all_versions",split="train")
 print(dataset)
+
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 tokenizer.add_tokens(["<gogogo>"]) # 定义特殊单词
 tokenizer.add_tokens(AddedToken(content="[You are good]", single_word=False))
 # model = AutoModel.from_pretrained("bert-base-uncased")
-
-s1 = "you are successful in doing something while you fail to some other things"
-s2 = "you are right, but there is nothing useful!"
-
+# s1 = "you are successful in doing something while you fail to some other things"
+# s2 = "you are right, but there is nothing useful!"
 # def encode(examples):
 #     return tokenizer(examples["sentence1"], examples["sentence2"], truncation=True, padding="max_length")
 # print("\n", tokenizer(s1, truncation=True, padding=True, return_tensors="pt"))
@@ -66,10 +66,12 @@ def collate_woz(batch):
     }
 from torch.utils.data.sampler import BatchSampler, RandomSampler
 batch_sampler = BatchSampler(RandomSampler(dataset), batch_size=32, drop_last=False)
-dataloader = DataLoader(dataset, batch_sampler=batch_sampler, collate_fn = collate_woz)
+dataloader = DataLoader(dataset, batch_sampler=batch_sampler)#, collate_fn = collate_woz)
 max_len = 0
 for idx, data in enumerate(dataloader):
-    max_len = max(max_len, data["context_ids"].shape[1])
+    #max_len = max(max_len, data["context_ids"].shape[1])
+    import pdb
+    pdb.set_trace()
 
 print(max_len)
 
