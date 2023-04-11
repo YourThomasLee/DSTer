@@ -229,4 +229,10 @@ class MultiWOZ(datasets.GeneratorBasedBuilder):
                             continue
                         value = normalize_state_value(domain, slot, value.strip(), replacements, remove_none=True)
                         belief_state[domain_slot] = value
+            if "train-book people" not in belief_state and "train-book people" not in metadata["train"]["book"]:
+                belief_state["train-book people"] = []
+            import pdb
+            if len(belief_state) < 30:
+                pdb.set_trace()
+
             return belief_state

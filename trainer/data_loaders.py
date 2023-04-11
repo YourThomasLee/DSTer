@@ -16,8 +16,6 @@ import json
 from utils import util
 from trainer.dataset import MultiWOZ
 
-SCHEMA_22_PATH = "./data/multiwoz/version22/data/MultiWOZ_2.2/schema.json"
-
 class MnistDataLoader(BaseDataLoader):
     """
     MNIST data loading demo using BaseDataLoader
@@ -126,15 +124,6 @@ tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 state_value_domain = dict()
 is_exist_state_value_domain = False
 
-def load_domain_slot_type(file_path):
-    ret = dict()
-    schema = json.load(open(file_path))
-    for d in schema:
-        for s in d["slots"]:
-            k = s["name"]
-            ret[k] = s["is_categorical"]
-    return ret
-
 def collate_woz(batch):
     # dialogue_id, turn_id, context, sys_utt, usr_utt, 
     # prev_states, states
@@ -159,9 +148,6 @@ def collate_woz(batch):
         states_text = f([k.replace("-", " ") for k in batch[0]["states"]["slot_name"]]) # state_text
         cur_states = transform_state(batch, "states") # label -> label embedding
         prev_states = transform_state(batch, "prev_states")# label -> label embedding
-    if len(cur_states.keys()) != 30:
-        import pdb 
-        pdb.set_trace()
     return {
         "dialogue_id": dial_id,
         "turn_id": turn_id,
@@ -184,18 +170,10 @@ def worker_init_fn(worker_id):
 
 class WOZDataLoader(BaseDataLoader):
     """
-    original data schema:
-        dialogue_id,string
-        turn_id,int
-        sys_utt,string
-        usr_utt,string
-        states_21,dict
-        states_22,dict
-        states_23,dict
-        states_24,dict
-    preprocess:
-        remove_last_turn
-        remove_empty_state
+        dialogue_id,
+        turn_id,
+        usr_utt,
+        sys_utt,
         generate_dialogue_history => context
         generate_previous_state => prev_states
     """
@@ -207,7 +185,6 @@ class WOZDataLoader(BaseDataLoader):
         train_sampler = BatchSampler(RandomSampler(dataset), batch_size=batch_size, drop_last=False)
         test_sampler = BatchSampler(SequentialSampler(dataset), batch_size=batch_size, drop_last=False)
         valid_sampler = BatchSampler(SequentialSampler(val_dataset), batch_size=batch_size, drop_last=False)
-        self.domain_slot_type = load_domain_slot_type(SCHEMA_22_PATH)
         self.add_tokens(['[end of system text]', '[end of user text]'])
         super().__init__(dataset, batch_size, shuffle, validation_split,
                         num_workers, 
