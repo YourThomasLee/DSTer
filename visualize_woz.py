@@ -64,13 +64,12 @@ def analyze_labels(train_loader, valid_loader, test_loader, slot_types):
 
     def cross_entropy(d1, d2):
         # -p1 log(p2)
-        assert(set(d1.keys()) == set(d2.keys()))
-        s1 = sum([v + 1 for k, v in d1.items() if k != "none"]) #laplace transformation
-        s2 = sum([v + 1 for k, v in d2.items() if k != "none"])
+        all_candidates = set([k for k in d1 if k != "none"] + [l for l in d2 if l !=  "none"])
+        s1 = sum([d1.get(k, 0) + 1 for k in all_candidates if k != "none"]) #laplace transformation
+        s2 = sum([d2.get(k, 0) + 1 for k in all_candidates if k != "none"])
         crs_ent = 0
-        for k in d1.keys():
+        for k in all_candidates:
             crs_ent += -(d1[k] + 1) / s1 * math.log((d2[k] + 1) / s2)
-
         return crs_ent
 
     label_ent = {k: [0, 0, 0] for k in train_labels}
@@ -79,7 +78,7 @@ def analyze_labels(train_loader, valid_loader, test_loader, slot_types):
         label_ent[ds][1] = entropy([v for k, v in valid_labels[ds].items() if k != "none"])
         label_ent[ds][2] = entropy([v for k, v in test_labels[ds].items() if k != "none"])
     
-    label_crs = {k: [] for k in train_labels}
+    label_crs = {k: [] for k in train_labels if slot_types[k]}
     for ds in label_crs:
         label_crs[ds] = [cross_entropy(valid_labels[ds], train_labels[ds]),
                          cross_entropy(test_labels[ds], train_labels[ds]),
