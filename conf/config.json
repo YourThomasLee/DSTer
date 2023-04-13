@@ -1,9 +1,9 @@
 {
-    "name": "DSTModel",
+    "name": "WozModel",
     "n_gpu": 1,
     "device": "cuda",
     "arch": {
-        "type": "DSTModel",
+        "type": "WozModel",
         "args": {
             "domain_slots": ["attraction-area", "attraction-name", "attraction-type", "bus-day", "bus-departure", "bus-destination", 
                 "bus-leave at", "hospital-department", "hotel-area", "hotel-book day", "hotel-book people", "hotel-book stay", 
@@ -11,11 +11,11 @@
                 "restaurant-book day", "restaurant-book people", "restaurant-book time", "restaurant-food", "restaurant-name", 
                 "restaurant-price range", "taxi-arrive by", "taxi-departure", "taxi-destination", "taxi-leave at", "train-arrive by", 
                 "train-book people", "train-day", "train-departure", "train-destination", "train-leave at"],
-            "state_label_num": 35,
+            "state_label_num": 30,
             "state_domain_card": [6, 158, 27, 1, 1, 4, 1, 48, 6, 11, 8, 8, 3, 78, 4, 6, 7, 3, 6, 8, 8, 66, 103, 182, 4, 97, 255, 251, 
             108, 156, 12, 8, 31, 27, 201],
+            "bert_name": "bert-base-uncased",
             "d_model": 64,
-            "padding_idx": 0,
             "dropout": 0.2,
             "attn_heads": 4
         }
