@@ -19,6 +19,13 @@ class BertEmbedding(nn.Module):
         return self.normalize_layer(mid_tensor) # batch_size * sentence_len * d_model
 
 class CrossLayer(nn.Module):
+    '''
+    input:
+        - context: user_utterrance + system_utterrance ... of previous turns => self_attention
+        - usr_utt: user_utterance in current turn => attention(usr_utt, context, )
+        - previous_states: belief_state in previous turn
+        - cur_states: belief_state in current turn
+    '''
 
     def __init__(self, d_model, dropout):
         pass
@@ -27,7 +34,15 @@ class CrossLayer(nn.Module):
         pass
 
 class TaskLayer(nn.Module):
-
+    '''
+    input: 
+        - context: utterance history
+        - usr_utt: user_utterance
+        - domains - slots: 
+        - previous_states:
+        - cur_states:
+        
+    '''
     def __init__(self, ):
         pass
 

@@ -18,3 +18,17 @@ useful links:
 - [Using Bert to implement name entity recognition](https://zhuanlan.zhihu.com/p/567920519)
 - [Develop text CNN basd on Bert output](https://www.likecs.com/ask-3448006.html)
 
+variable analysis based on intuition
+
+
+```mermaid
+graph LR
+previous_states --> user_utterance
+context -->user_utterance
+previous_states --> domain_slot_gates
+user_utterance --> domain_slot_gates
+previous_states --> slot_value_prediction
+user_utterance --> slot_value_prediction
+domain_slot_gates --> slot_value_prediction
+
+```
