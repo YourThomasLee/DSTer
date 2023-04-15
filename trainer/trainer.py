@@ -4,7 +4,6 @@ from torchvision.utils import make_grid
 from base import BaseTrainer
 from utils import inf_loop, MetricTracker
 
-
 class Trainer(BaseTrainer):
     """
     Trainer class
@@ -25,10 +24,20 @@ class Trainer(BaseTrainer):
         self.valid_data_loader = valid_data_loader
         self.do_validation = self.valid_data_loader is not None
         self.lr_scheduler = lr_scheduler
-        self.log_step = int(np.sqrt(data_loader.batch_size))
+        self.log_step = int(np.sqrt(config['data_loader']['args']['batch_size']))
 
         self.train_metrics = MetricTracker('loss', *[m.__name__ for m in self.metric_ftns], writer=self.writer)
         self.valid_metrics = MetricTracker('loss', *[m.__name__ for m in self.metric_ftns], writer=self.writer)
+
+    def to_device(self, data):
+        for k,v in data.items():
+            if isinstance(v, torch.Tensor):
+                data[k] = v.to(self.device)
+            if isinstance(v, dict):
+                for ds, ts in v.items():
+                    if isinstance(ts, torch.Tensor):
+                        data[k][ds] = ts.to(self.device)
+        return data
 
     def _train_epoch(self, epoch):
         """
@@ -37,22 +46,20 @@ class Trainer(BaseTrainer):
         :param epoch: Integer, current training epoch.
         :return: A log that contains average loss and metric in this epoch.
         """
+        import pdb
         self.model.train()
         self.train_metrics.reset()
         for batch_idx, data in enumerate(self.data_loader):
-            data = {k: v.to(self.device) if isinstance(v, torch.Tensor) else v for k, v in data.items()}
-            target = {k: data[k] for k in {"dial_id", "turn_id", "previous_state", "current_state"}}
-            # data, target = data.to(self.device), target.to(self.device)
-            
+            data = self.to_device(data)
             self.optimizer.zero_grad()
             output = self.model(data)
-            loss = self.criterion(output, target)
+            loss = self.criterion(output, data)
             loss.backward()
             self.optimizer.step()
             self.writer.set_step((epoch - 1) * self.len_epoch + batch_idx)
             self.train_metrics.update('loss', loss.item())
             for met in self.metric_ftns:
-                self.train_metrics.update(met.__name__, met(output, target))
+                self.train_metrics.update(met.__name__, met(output, data))
 
             if batch_idx % self.log_step == 0:
                 self.logger.debug('Train Epoch: {} {} Loss: {:.6f}'.format(

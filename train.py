@@ -2,11 +2,12 @@ import argparse
 import collections
 import torch
 import numpy as np
+import pdb
 
 import trainer.data_loaders as module_data
 import model.loss as module_loss
 import model.metric as module_metric
-import model.model as module_arch
+import model.woz_model as module_arch
 from utils.parse_config import ConfigParser
 from trainer import Trainer
 from trainer import scheduler
@@ -18,12 +19,11 @@ def train(config):
     # setup data_loader instances
     data_loader = config.init_obj('data_loader', module_data)
     valid_data_loader = data_loader.split_validation()
-    print("finished"); exit(0)
+    
     # build model architecture, then print to console
     model = config.init_obj('arch', module_arch)
     # print model structure
     logger.info(model)
-    
     # prepare for (multi-device) GPU training
     device, device_ids = prepare_device(config['n_gpu'])
     model = model.to(device)

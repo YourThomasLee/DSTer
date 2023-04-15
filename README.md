@@ -32,3 +32,9 @@ user_utterance --> slot_value_prediction
 domain_slot_gates --> slot_value_prediction
 
 ```
+
+- $P(user\_utterance | previous\_states, context)$
+- $P(domain\_slot\_gates| previous\_state, user\_utterance)$
+- $P(slot\_value|domain\_slot\_gate, user\_utterance)$
+
+check influence of the sequence order of dialogue history

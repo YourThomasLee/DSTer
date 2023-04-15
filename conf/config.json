@@ -46,8 +46,6 @@
     "scheduler": {
         "type": "NoamLR",
         "args": {
-            "step_size": 50,
-            "gamma": 0.05,
             "model_size": 64,
             "factor": 0.8,
             "warmup_steps": 4000

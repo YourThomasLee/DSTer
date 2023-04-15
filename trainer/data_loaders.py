@@ -124,11 +124,12 @@ tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 state_value_domain = dict()
 is_exist_state_value_domain = False
 
+SLOT_GATES = {"COPY": 0, "UPDATE": 1}
+
 def collate_woz(batch):
     # dialogue_id, turn_id, context, sys_utt, usr_utt, 
     # prev_states, states
     #str data
-    
     dial_id = [item['dialogue_id'] for item in batch]
     turn_id = [item['turn_id'] for item in batch]
     f = lambda l: tokenizer(l, truncation=False, padding=True, return_tensors = "pt")
@@ -140,27 +141,37 @@ def collate_woz(batch):
                     ret[k] = list()
                 ret[k].append("none" if len(v) == 0 else v[0])
         return ret
-
+    cur_states = transform_state(batch, "states") # label -> label embedding
+    pre_states = transform_state(batch, "prev_states")# label -> label embedding
     with torch.no_grad():
         context_tokens = f([item["context"] for item in batch])
         usr_utt_tokens = f([item["usr_utt"] for item in batch])
         sys_utt_tokens = f([item["sys_utt"] for item in batch])
         states_text = f([k.replace("-", " ") for k in batch[0]["states"]["slot_name"]]) # state_text
-        cur_states = transform_state(batch, "states") # label -> label embedding
-        prev_states = transform_state(batch, "prev_states")# label -> label embedding
+        cur_states_tokens = {k: f(v) for k,v in cur_states.items()}
+        pre_states_tokens = {k: f(v) for k,v in pre_states.items()}
+        slot_gates = {k: [0 if cur_states[k][idx] == pre_states[k][idx] else 1 for idx in range(len(cur_states[k]))] for k in cur_states.keys()}
+
     return {
         "dialogue_id": dial_id,
         "turn_id": turn_id,
+        "context": [item['context'] for item in batch],
         "context_ids": context_tokens["input_ids"],
         "context_mask": context_tokens["attention_mask"],
+        "usr_utt": [item['usr_utt'] for item in batch],
         "usr_utt_ids": usr_utt_tokens["input_ids"],
         "usr_utt_mask": usr_utt_tokens["attention_mask"],
         "sys_utt_ids": sys_utt_tokens["input_ids"],
         "sys_utt_mask": sys_utt_tokens["attention_mask"],
-        "state_text": states_text["input_ids"],
+        "state_text": states_text["input_ids"], # domain-slot-label-text
         "state_mask": states_text["attention_mask"],
         "cur_states": cur_states,
-        "pre_states": prev_states
+        "cur_states_ids": {k: v['input_ids'] for k,v in cur_states_tokens.items()},
+        "cur_states_mask": {k: v['attention_mask'] for k,v in cur_states_tokens.items()},
+        "pre_states": pre_states,
+        "pre_states_ids": {k: v['input_ids'] for k,v in pre_states_tokens.items()},
+        "pre_states_ids": {k: v['attention_mask'] for k,v in pre_states_tokens.items()},
+        "slot_gates": slot_gates
     }
 
 def worker_init_fn(worker_id):
@@ -185,7 +196,7 @@ class WOZDataLoader(BaseDataLoader):
         train_sampler = BatchSampler(RandomSampler(dataset), batch_size=batch_size, drop_last=False)
         test_sampler = BatchSampler(SequentialSampler(dataset), batch_size=batch_size, drop_last=False)
         valid_sampler = BatchSampler(SequentialSampler(val_dataset), batch_size=batch_size, drop_last=False)
-        self.add_tokens(['[end of system text]', '[end of user text]'])
+        self.add_tokens(['[end of system text]', '[end of user text]', 'dontcare'])
         super().__init__(dataset, batch_size, shuffle, validation_split,
                         num_workers, 
                         train_sampler=train_sampler if training else test_sampler, 
