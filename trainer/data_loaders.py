@@ -145,12 +145,11 @@ def collate_woz(batch):
     pre_states = transform_state(batch, "prev_states")# label -> label embedding
     with torch.no_grad():
         context_tokens = f([item["context"] for item in batch])
-        usr_utt_tokens = f([item["usr_utt"] for item in batch])
-        sys_utt_tokens = f([item["sys_utt"] for item in batch])
+        cur_utt_tokens = f([item["cur_utt"] for item in batch])
         states_text = f([k.replace("-", " ") for k in batch[0]["states"]["slot_name"]]) # state_text
         cur_states_tokens = {k: f(v) for k,v in cur_states.items()}
         pre_states_tokens = {k: f(v) for k,v in pre_states.items()}
-        slot_gates = {k: [0 if cur_states[k][idx] == pre_states[k][idx] else 1 for idx in range(len(cur_states[k]))] for k in cur_states.keys()}
+        slot_gates = {k: torch.tensor([0 if cur_states[k][idx] == pre_states[k][idx] else 1 for idx in range(len(cur_states[k]))]) for k in cur_states.keys()}
 
     return {
         "dialogue_id": dial_id,
@@ -158,11 +157,9 @@ def collate_woz(batch):
         "context": [item['context'] for item in batch],
         "context_ids": context_tokens["input_ids"],
         "context_mask": context_tokens["attention_mask"],
-        "usr_utt": [item['usr_utt'] for item in batch],
-        "usr_utt_ids": usr_utt_tokens["input_ids"],
-        "usr_utt_mask": usr_utt_tokens["attention_mask"],
-        "sys_utt_ids": sys_utt_tokens["input_ids"],
-        "sys_utt_mask": sys_utt_tokens["attention_mask"],
+        "cur_utt": [item['cur_utt'] for item in batch],
+        "cur_utt_ids": cur_utt_tokens["input_ids"],
+        "cur_utt_mask": cur_utt_tokens["attention_mask"],
         "state_text": states_text["input_ids"], # domain-slot-label-text
         "state_mask": states_text["attention_mask"],
         "cur_states": cur_states,
@@ -170,8 +167,8 @@ def collate_woz(batch):
         "cur_states_mask": {k: v['attention_mask'] for k,v in cur_states_tokens.items()},
         "pre_states": pre_states,
         "pre_states_ids": {k: v['input_ids'] for k,v in pre_states_tokens.items()},
-        "pre_states_ids": {k: v['attention_mask'] for k,v in pre_states_tokens.items()},
-        "slot_gates": slot_gates
+        "pre_states_mask": {k: v['attention_mask'] for k,v in pre_states_tokens.items()},
+        "slots_gates": slot_gates
     }
 
 def worker_init_fn(worker_id):

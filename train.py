@@ -23,7 +23,7 @@ def train(config):
     # build model architecture, then print to console
     model = config.init_obj('arch', module_arch)
     # print model structure
-    logger.info(model)
+    # logger.info(model)
     # prepare for (multi-device) GPU training
     device, device_ids = prepare_device(config['n_gpu'])
     model = model.to(device)

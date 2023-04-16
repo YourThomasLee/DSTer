@@ -91,6 +91,7 @@ class MultiWOZ(datasets.GeneratorBasedBuilder):
                 "context": datasets.Value("string"),
                 "sys_utt": datasets.Value("string"),
                 "usr_utt": datasets.Value("string"),
+                "cur_utt": datasets.Value("string"),
                 "prev_states": datasets.Sequence(
                     datasets.Features({
                     "slot_name": datasets.Value("string"),
@@ -150,13 +151,14 @@ class MultiWOZ(datasets.GeneratorBasedBuilder):
         for dial_id, dial in dialogues.items():
             if dial_id not in dialogue_ids:
                 continue
-            prev_states, context, sys_utt, usr_utt = dict(), [], "none", "none"
+            prev_states, context, sys_utt, usr_utt = dict(), [], "", ""
             for turn_id, turn in enumerate(dial["log"]):
                 role = "usr" if turn_id % 2 == 0  else "sys"
                 utterance = restore_common_abbr(normalize(turn['text'].strip(), replacements))
                 if role == "usr":
                     usr_utt = utterance
                 else:
+                    cur_utt = sys_utt + " [end of system text] " + usr_utt + " [end of user text] "
                     sys_utt = utterance
                     states = self.extract_states(turn["metadata"])
                     cur_states = {
@@ -176,6 +178,7 @@ class MultiWOZ(datasets.GeneratorBasedBuilder):
                         "context": " ".join(context[-self.num_context_turn:]),
                         "usr_utt": usr_utt,
                         "sys_utt": sys_utt,
+                        "cur_utt": cur_utt,
                         "prev_states": prev_states,
                         "states": cur_states
                     }

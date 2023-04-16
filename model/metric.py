@@ -24,6 +24,13 @@ def joint_accuracy(output, target):
         cur_state_acc = comput_joint_acc(output['curr_state'], target["current_state"])
     return cur_state_acc#np.mean([hist_acc, cur_state_acc]) # np.mean([hist_acc, update_acc, cur_state_acc])
         
+def slots_gates_accuracy(logits, target):
+    with torch.no_grad():
+        pred = torch.argmax(logits['slots_gates'], dim = -1)
+        truth = torch.stack([v for k,v in target['slots_gates'].items()], dim=1)
+        correct = torch.sum(pred == truth).item()
+        rate = correct / truth.numel()
+    return rate
 
 def accuracy(output, target):
     with torch.no_grad():

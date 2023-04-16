@@ -16,7 +16,7 @@
             108, 156, 12, 8, 31, 27, 201],
             "bert_name": "bert-base-uncased",
             "d_model": 64,
-            "dropout": 0.2,
+            "dropout": 0.1,
             "attn_heads": 4
         }
     },
@@ -39,9 +39,9 @@
             "amsgrad": true
         }
     },
-    "loss": "cross_entropy",
+    "loss": "woz_loss",
     "metrics": [
-        "joint_accuracy"
+        "slots_gates_accuracy"
     ],
     "scheduler": {
         "type": "NoamLR",

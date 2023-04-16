@@ -24,7 +24,8 @@ class Trainer(BaseTrainer):
         self.valid_data_loader = valid_data_loader
         self.do_validation = self.valid_data_loader is not None
         self.lr_scheduler = lr_scheduler
-        self.log_step = int(np.sqrt(config['data_loader']['args']['batch_size']))
+        self.batch_size = config['data_loader']['args']['batch_size']
+        self.log_step = 2 * int(np.sqrt(self.batch_size))
 
         self.train_metrics = MetricTracker('loss', *[m.__name__ for m in self.metric_ftns], writer=self.writer)
         self.valid_metrics = MetricTracker('loss', *[m.__name__ for m in self.metric_ftns], writer=self.writer)
@@ -46,20 +47,19 @@ class Trainer(BaseTrainer):
         :param epoch: Integer, current training epoch.
         :return: A log that contains average loss and metric in this epoch.
         """
-        import pdb
         self.model.train()
         self.train_metrics.reset()
         for batch_idx, data in enumerate(self.data_loader):
             data = self.to_device(data)
             self.optimizer.zero_grad()
-            output = self.model(data)
-            loss = self.criterion(output, data)
+            logits = self.model(data)
+            loss = self.criterion(logits, data, self.device)
             loss.backward()
             self.optimizer.step()
             self.writer.set_step((epoch - 1) * self.len_epoch + batch_idx)
             self.train_metrics.update('loss', loss.item())
             for met in self.metric_ftns:
-                self.train_metrics.update(met.__name__, met(output, data))
+                self.train_metrics.update(met.__name__, met(logits, data))
 
             if batch_idx % self.log_step == 0:
                 self.logger.debug('Train Epoch: {} {} Loss: {:.6f}'.format(
@@ -91,16 +91,14 @@ class Trainer(BaseTrainer):
         self.valid_metrics.reset()
         with torch.no_grad():
             for batch_idx, data in enumerate(self.valid_data_loader):
-                data = {k: v.to(self.device) if isinstance(v, torch.Tensor) else v for k, v in data.items()}
-                target = {k: data[k] for k in {"dial_id", "turn_id", "previous_state", "current_state"}}
-
-                output = self.model(data)
-                loss = self.criterion(output, target)
+                data = self.to_device(data)
+                logits = self.model(data)
+                loss = self.criterion(logits, data,self.device)
 
                 self.writer.set_step((epoch - 1) * len(self.valid_data_loader) + batch_idx, 'valid')
                 self.valid_metrics.update('loss', loss.item())
                 for met in self.metric_ftns:
-                    self.valid_metrics.update(met.__name__, met(output, target))
+                    self.valid_metrics.update(met.__name__, met(logits, data))
                 # self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
 
         # add histogram of model parameters to the tensorboard
@@ -111,7 +109,7 @@ class Trainer(BaseTrainer):
     def _progress(self, batch_idx):
         base = '[{}/{} ({:.0f}%)]'
         if hasattr(self.data_loader, 'n_samples'):
-            current = batch_idx * self.data_loader.batch_size
+            current = batch_idx * self.batch_size
             total = self.data_loader.n_samples
         else:
             current = batch_idx

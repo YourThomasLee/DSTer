@@ -40,7 +40,9 @@ class MultiHeadedAttention(nn.Module):
     def forward(self, query, key, value, mask=None):
         "Implements Figure 2"
         if mask is not None:
-            mask = mask.unsqueeze(1)
+            if mask.dim() < key.dim():
+                mask = mask.unsqueeze(-2) # embedding dimension
+            mask = mask.unsqueeze(1) # n_heads dimension
         nbatches = query.size(0)
     
         query, key, value = \

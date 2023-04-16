@@ -3,7 +3,7 @@ import torch.nn.functional as F
 
 
 def cross_entropy(output, target):
-    loss = torch.tensor([0.], device=target["previous_state"].device)
+    loss = torch.tensor([0.], device=target["prev_states"].device)
     #前一个状态的预测
     # hist_state_true = target["previous_state"]
     # hist_state_pred = output['hist_state']
@@ -20,6 +20,10 @@ def cross_entropy(output, target):
     curr_state_pred = output['curr_state']
     loss += F.cross_entropy(curr_state_pred, curr_state_true)
     return loss
+
+def woz_loss(logits, target, device = 'cuda'):
+    truth = torch.stack([v for k,v in target['slots_gates'].items()], dim=1)
+    return F.cross_entropy(logits['slots_gates'].transpose(-1,-2), truth, reduction="mean", label_smoothing=0.0)
 
 def nll_loss(output, target):
     return F.nll_loss(output, target)

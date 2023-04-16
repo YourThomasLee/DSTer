@@ -8,6 +8,7 @@ from copy import deepcopy as c
 from base import BaseModel
 from trainer.data_loaders import tokenizer
 from model.attention import MultiHeadedAttention
+from model.feed_forward_net import FeedForwardNet
 
 def clones(module, N):
     "Produce N identical layers."
@@ -20,11 +21,15 @@ class WozEmbedding(nn.Module):
         self.bert_layer = AutoModel.from_pretrained(bert_name)
         self.bert_layer.resize_token_embeddings(len(tokenizer))
         
-    def forward(self, context_ids, usr_utt_ids, pre_states_ids):
+    def forward(self, context_ids, cur_utt_ids, pre_states_ids):
         context_embed = self.bert_layer(context_ids)
-        usr_utt_embed = self.bert_layer(usr_utt_ids)
+        cur_utt_embed = self.bert_layer(cur_utt_ids)
         pre_states_embed = {k: self.bert_layer(v).pooler_output for k, v in pre_states_ids.items()}
-        return context_embed, usr_utt_embed, pre_states_embed # batch_size * sentence_len * 768
+        embeddings = {"context": context_embed,
+                 "cur_utt": cur_utt_embed,
+                 "pre_states": pre_states_embed
+                }
+        return embeddings # batch_size * sentence_len * 768
 
 class CrossLayer(nn.Module):
     '''
@@ -36,11 +41,17 @@ class CrossLayer(nn.Module):
         - slot_value_logit
     '''
 
-    def __init__(self, d_model, dropout):
+    def __init__(self, attn_heads, d_model, dropout):
         super(CrossLayer, self).__init__()
-        self.squeezer = clones(nn.Linear(768, d_model), 3)
-        self.normalize_layer = clones(nn.Sequential(nn.LayerNorm(d_model),nn.Dropout(dropout)), 3)
-        
+        self.attns = clones(MultiHeadedAttention(attn_heads, d_model, dropout), 3)
+        self.normalize_layer = clones(nn.Sequential(
+                                                nn.Linear(768, d_model), 
+                                                nn.LayerNorm(d_model),
+                                                nn.Dropout(dropout)
+                                            ), 
+                                        3)
+        self.norms = clones(nn.LayerNorm(d_model), 2)
+        self.ffns = clones(FeedForwardNet(d_model, int(1.5 * d_model), dropout), 2)
 
     def _init_weights(self, module):
         if isinstance(module, (nn.Linear, nn.Embedding)):
@@ -51,10 +62,32 @@ class CrossLayer(nn.Module):
             module.bias.data.zero_()
             module.weight.data.fill_(1.0)
 
-    def forward(self, ):
-        out = []
-        for idx, item in enumerate([1, 2, 3]):
-            out.append(self.normalize_layer[idx](self.squeezer[idx](item)))
+    def forward(self, embeddings, masks):
+        i = 0
+        fea = dict()
+        for k,v in embeddings.items():
+            if "last_hidden_state" in v.keys(): # cur_utt, context
+                fea[k] = self.normalize_layer[i](v['last_hidden_state'])
+            elif len(v.keys()) > 29: # slots 
+                if k not in fea: fea[k] = dict()
+                for slot, embed in v.items():
+                    fea[k][slot] = self.normalize_layer[i](embed)
+            i += 1
+        pred_input = dict()
+        # preNorm + residual connection
+        cur_utt_attn = fea['cur_utt'] + self.attns[0](
+                    fea['cur_utt'], fea['context'], fea['context'], 
+                    masks['context']
+                )
+        pred_input['cur_utt'] = cur_utt_attn + self.ffns[0](self.norms[0](cur_utt_attn))
+        pred_input['slots_gates'] = dict()
+        for k,v in fea['pre_states'].items():
+            v_attn = v + self.attns[1](
+                    v.unsqueeze(-2), pred_input['cur_utt'], pred_input['cur_utt'], 
+                    masks['cur_utt']
+                ).squeeze(-2)
+            pred_input['slots_gates'][k] = v_attn + self.ffns[1](self.norms[1](v_attn))
+        return pred_input
 
 class TaskLayer(nn.Module):
     '''
@@ -65,9 +98,11 @@ class TaskLayer(nn.Module):
         - previous_states:
         - cur_states:
     '''
-    def __init__(self, ):
+    def __init__(self, slots, d_model, dropout):
         super(TaskLayer, self).__init__()
-        pass
+        self.gates = nn.Linear(d_model, 2) # slot_gates_prediction
+
+        
 
     def _init_weights(self, module):
         if isinstance(module, (nn.Linear, nn.Embedding)):
@@ -78,9 +113,15 @@ class TaskLayer(nn.Module):
             module.bias.data.zero_()
             module.weight.data.fill_(1.0)
     
-    def forward(self, ):
-        pass
-
+    def forward(self, input):
+        logits = dict()
+        logits['slots_gates'] = self.gates(
+            torch.stack(
+                [v for k, v in input['slots_gates'].items()], 
+                dim=1
+                )
+            )
+        return logits
 
 class WozModel(BaseModel):
     def __init__(self, bert_name,
@@ -93,15 +134,18 @@ class WozModel(BaseModel):
             ):
         super(WozModel, self).__init__()
         self.embedding = WozEmbedding(bert_name, d_model, dropout)
-        # self.model = CrossLayer(attn_heads, d_model, dropout, self.embedding)
-        # self.task_layer = TaskLayer(state_label_num, state_domain_card, self.embedding, dropout)
+        self.cross_layer = CrossLayer(attn_heads, d_model, dropout)
+        self.task_layer = TaskLayer(state_label_num, d_model, dropout)
 
     def forward(self, batch):
-        context_tensor, usr_utt_tensor, pre_states_tensor = self.embedding(batch['context_ids'], 
-                                   batch['usr_utt_ids'], 
+        embeddings = self.embedding(batch['context_ids'], 
+                                   batch['cur_utt_ids'], 
                                    batch['pre_states_ids']
                                 )
-        # feature = self.model(embedding)
-        # pred = self.task_layer(feature)
-        # return pred
-        pass
+        masks = {"context": batch["context_mask"],
+                "cur_utt": batch["cur_utt_mask"],
+                "pre_states": batch["pre_states_mask"], 
+                }
+        pred_input = self.cross_layer(embeddings, masks)
+        logits = self.task_layer(pred_input)
+        return logits
