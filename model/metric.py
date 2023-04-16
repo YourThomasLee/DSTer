@@ -32,6 +32,16 @@ def slots_gates_accuracy(logits, target):
         rate = correct / truth.numel()
     return rate
 
+def slots_values_accuracy(logits, target):
+    with torch.no_grad():
+        pred = torch.argmax(logits['slots_values'], dim = -1)
+        label_gates = torch.tensor([0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1,0, 1, 1, 0, 1, 1],
+                                    requires_grad = False, device=pred.device) # 30
+        truth = torch.stack([v for k,v in target['cur_states_class_ids'].items()], dim=1)
+        correct = ((pred == truth) * label_gates).sum().item()
+        rate = correct / label_gates.sum().item() * truth.shape[0]
+    return rate
+
 def accuracy(output, target):
     with torch.no_grad():
         pred = torch.argmax(output, dim=1)

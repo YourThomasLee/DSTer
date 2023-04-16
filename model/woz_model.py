@@ -98,9 +98,11 @@ class TaskLayer(nn.Module):
         - previous_states:
         - cur_states:
     '''
-    def __init__(self, slots, d_model, dropout):
+    def __init__(self, slots, slots_classification, d_model, dropout):
         super(TaskLayer, self).__init__()
-        self.gates = nn.Linear(d_model, 2) # slot_gates_prediction
+        self.is_classification = nn.Parameter(torch.tensor([1 if i in slots_classification else 0 for i in slots]), requires_grad=False)
+        self.gates_layer = nn.Linear(d_model, 2) # slot_gates_prediction
+        self.values_layer = nn.Linear(d_model, 15) # slot_value_prediction
 
         
 
@@ -115,18 +117,15 @@ class TaskLayer(nn.Module):
     
     def forward(self, input):
         logits = dict()
-        logits['slots_gates'] = self.gates(
-            torch.stack(
-                [v for k, v in input['slots_gates'].items()], 
-                dim=1
-                )
-            )
+        slots_fea = torch.stack([v for k, v in input['slots_gates'].items()], dim=1)
+        logits['slots_gates'] = self.gates_layer(slots_fea)
+        logits['slots_values'] = self.values_layer(slots_fea)#.masked_fill(self.is_classification.unsqueeze(0).unsqueeze(-1) == 0, 0.0)
         return logits
 
 class WozModel(BaseModel):
     def __init__(self, bert_name,
-            state_label_num, 
-            state_domain_card, 
+            domain_slots, 
+            slots_classification, 
             d_model,
             dropout,
             attn_heads,
@@ -135,7 +134,7 @@ class WozModel(BaseModel):
         super(WozModel, self).__init__()
         self.embedding = WozEmbedding(bert_name, d_model, dropout)
         self.cross_layer = CrossLayer(attn_heads, d_model, dropout)
-        self.task_layer = TaskLayer(state_label_num, d_model, dropout)
+        self.task_layer = TaskLayer(domain_slots, slots_classification, d_model, dropout)
 
     def forward(self, batch):
         embeddings = self.embedding(batch['context_ids'], 

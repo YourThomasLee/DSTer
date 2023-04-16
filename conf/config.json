@@ -5,13 +5,15 @@
     "arch": {
         "type": "WozModel",
         "args": {
-            "domain_slots": ["attraction-area", "attraction-name", "attraction-type", "bus-day", "bus-departure", "bus-destination", 
-                "bus-leave at", "hospital-department", "hotel-area", "hotel-book day", "hotel-book people", "hotel-book stay", 
-                "hotel-internet", "hotel-name", "hotel-parking", "hotel-price range", "hotel-stars", "hotel-type", "restaurant-area", 
-                "restaurant-book day", "restaurant-book people", "restaurant-book time", "restaurant-food", "restaurant-name", 
-                "restaurant-price range", "taxi-arrive by", "taxi-departure", "taxi-destination", "taxi-leave at", "train-arrive by", 
-                "train-book people", "train-day", "train-departure", "train-destination", "train-leave at"],
-            "state_label_num": 30,
+            "domain_slots": ["taxi-leave at", "taxi-destination", "taxi-departure", "taxi-arrive by", "restaurant-food", "restaurant-price range", 
+                "restaurant-name", "restaurant-area", "restaurant-book time", "restaurant-book day", "restaurant-book people", "hotel-name", 
+                "hotel-area", "hotel-parking", "hotel-price range", "hotel-stars", "hotel-internet", "hotel-type", "hotel-book stay", "hotel-book day", 
+                "hotel-book people", "attraction-type", "attraction-name", "attraction-area", "train-leave at", "train-destination", "train-day", 
+                "train-arrive by", "train-departure", "train-book people"],
+            "slots_classification": ["train-destination", "train-departure", "train-day", "restaurant-area", "restaurant-price range",
+                "hotel-area", "hotel-type", "attraction-type", "hotel-price range", "attraction-area", "hotel-stars", "restaurant-book people",
+                "restaurant-book day", "hotel-book stay", "hotel-book day", "hotel-book people", "hotel-parking", "hotel-internet", "train-book people"],
+            "slots_num": 30,
             "state_domain_card": [6, 158, 27, 1, 1, 4, 1, 48, 6, 11, 8, 8, 3, 78, 4, 6, 7, 3, 6, 8, 8, 66, 103, 182, 4, 97, 255, 251, 
             108, 156, 12, 8, 31, 27, 201],
             "bert_name": "bert-base-uncased",
@@ -34,7 +36,7 @@
     "optimizer": {
         "type": "Adam",
         "args":{
-            "lr": 0.00025,
+            "lr": 0.0025,
             "weight_decay": 0,
             "amsgrad": true
         }

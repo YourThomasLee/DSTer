@@ -22,9 +22,8 @@ def set_seed(seed=42):
         torch.manual_seed(seed)
         torch.cuda.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
-        torch.set_deterministic(True)
+        #torch.backends.cudnn.deterministic = True
+        # torch.backends.cudnn.benchmark = False
 
 def main(config):
     """
@@ -59,6 +58,7 @@ def prepare_config():
     return config
 
 if __name__ == "__main__":
+    set_seed(42)
     config = prepare_config()
     main(config)
 

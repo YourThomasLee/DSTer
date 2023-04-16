@@ -79,10 +79,19 @@ def analyze_labels(train_loader, valid_loader, test_loader, slot_types):
         label_ent[ds][2] = entropy([v for k, v in test_labels[ds].items() if k != "none"])
     
     label_crs = {k: [] for k in train_labels if slot_types[k]}
-    for ds in label_crs:
+    value_domain = dict()
+    for ds in train_labels:
+        value_domain[ds] = dict()
+        value_domain[ds].update(train_labels[ds])
+        value_domain[ds].update(valid_labels[ds])
+        value_domain[ds].update(test_labels[ds])
+        if ds not in label_crs:
+            continue
         label_crs[ds] = [cross_entropy(valid_labels[ds], train_labels[ds]),
                          cross_entropy(test_labels[ds], train_labels[ds]),
                          cross_entropy(test_labels[ds], valid_labels[ds])]
+    slot_values = {k: list(v.keys()) for k,v in value_domain.items()}
+    json.dump(slot_values, open("slot_values.json", "w"))
     return label_freq, label_ent, label_crs
 
 if __name__ == "__main__":
@@ -90,6 +99,8 @@ if __name__ == "__main__":
     schema_file = "./data/multiwoz/version22/data/MultiWOZ_2.2/schema.json"
     slot_types, train_loader, valid_loader, test_loader = load_data(data_path, schema_file, version = "21", batch_size = 32)
     freq, ent, crs = analyze_labels(train_loader, valid_loader, test_loader, slot_types)
+    import json, pdb
+    pdb.set_trace()
     pd.DataFrame(freq).to_csv("freq.csv")
     pd.DataFrame(ent).to_csv("entropy.csv")
     pd.DataFrame(crs).to_csv("cross_entropy.csv")

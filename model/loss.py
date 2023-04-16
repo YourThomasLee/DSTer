@@ -22,8 +22,13 @@ def cross_entropy(output, target):
     return loss
 
 def woz_loss(logits, target, device = 'cuda'):
-    truth = torch.stack([v for k,v in target['slots_gates'].items()], dim=1)
-    return F.cross_entropy(logits['slots_gates'].transpose(-1,-2), truth, reduction="mean", label_smoothing=0.0)
+    label_gates = torch.tensor([0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1,
+        0, 1, 1, 0, 1, 1], requires_grad = False, device=device) # 30
+    gates_truth = torch.stack([v for k,v in target['slots_gates'].items()], dim=1)# 32 * 30
+    value_truth = torch.stack([v for k,v in target['cur_states_class_ids'].items()], dim=1)# 32 * 30
+    # prediction 32 * 30 * 15
+    loss = F.cross_entropy(logits['slots_values'].transpose(-1,-2), value_truth, reduction="none", label_smoothing=0.0) * gates_truth * label_gates
+    return loss.sum() / (label_gates.sum() * loss.shape[0])
 
 def nll_loss(output, target):
     return F.nll_loss(output, target)

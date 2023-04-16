@@ -12,11 +12,13 @@ tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 tokenizer.add_tokens(["<gogogo>"]) # 定义特殊单词
 tokenizer.add_tokens(AddedToken(content="[You are good]", single_word=False))
 # model = AutoModel.from_pretrained("bert-base-uncased")
-# s1 = "you are successful in doing something while you fail to some other things"
-# s2 = "you are right, but there is nothing useful!"
+s1 = "you are successful in doing something while you fail to some other things"
+s2 = "you are right, but there is nothing useful!"
 # def encode(examples):
 #     return tokenizer(examples["sentence1"], examples["sentence2"], truncation=True, padding="max_length")
-# print("\n", tokenizer(s1, truncation=True, padding=True, return_tensors="pt"))
+print("\n", tokenizer(s1, truncation=True, padding=True, return_tensors="pt"))
+import pdb
+pdb.set_trace()
 # input = tokenizer([s1, s2], truncation=True, padding=True, return_tensors="pt")
 # print(input)
 # print(model(input['input_ids']).last_hidden_state.shape, input['input_ids'].shape)

@@ -125,7 +125,7 @@ state_value_domain = dict()
 is_exist_state_value_domain = False
 
 SLOT_GATES = {"COPY": 0, "UPDATE": 1}
-
+slot_values = json.load(open("slot_values.json"))
 def collate_woz(batch):
     # dialogue_id, turn_id, context, sys_utt, usr_utt, 
     # prev_states, states
@@ -147,6 +147,7 @@ def collate_woz(batch):
         context_tokens = f([item["context"] for item in batch])
         cur_utt_tokens = f([item["cur_utt"] for item in batch])
         states_text = f([k.replace("-", " ") for k in batch[0]["states"]["slot_name"]]) # state_text
+        cur_state_class_ids = {k: torch.tensor([slot_values[k].index(i) for i in v]) for k,v in cur_states.items()}
         cur_states_tokens = {k: f(v) for k,v in cur_states.items()}
         pre_states_tokens = {k: f(v) for k,v in pre_states.items()}
         slot_gates = {k: torch.tensor([0 if cur_states[k][idx] == pre_states[k][idx] else 1 for idx in range(len(cur_states[k]))]) for k in cur_states.keys()}
@@ -162,6 +163,7 @@ def collate_woz(batch):
         "cur_utt_mask": cur_utt_tokens["attention_mask"],
         "state_text": states_text["input_ids"], # domain-slot-label-text
         "state_mask": states_text["attention_mask"],
+        "cur_states_class_ids": cur_state_class_ids,
         "cur_states": cur_states,
         "cur_states_ids": {k: v['input_ids'] for k,v in cur_states_tokens.items()},
         "cur_states_mask": {k: v['attention_mask'] for k,v in cur_states_tokens.items()},
