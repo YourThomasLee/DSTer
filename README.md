@@ -38,3 +38,7 @@ domain_slot_gates --> slot_value_prediction
 - $P(slot\_value|domain\_slot\_gate, user\_utterance)$
 
 check influence of the sequence order of dialogue history
+
+
+
+I decide to do further research based on "DiCoS" model
