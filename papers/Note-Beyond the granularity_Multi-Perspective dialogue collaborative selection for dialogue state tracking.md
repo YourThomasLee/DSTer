@@ -31,6 +31,8 @@ there are three parts for modeling different perspectives consideration.
 
 the model can be represented as $P(turns) = P(turns| current\_turn, update\_gates, implict\_coreference)$
 
+![](./_resource/DiCoS-DST-model.png)
+
 the process follows flow process:
 
 ```mermaid
@@ -81,6 +83,62 @@ $$
 h_{CT-DH}^t = \gamma_t[CLS]_T + [CLS]_t
 $$
 
-**Implicit Mention Oriented Reasoning**: taking into consideration of complex implicit mentions in dialogue, the authors build a graph neural network (GNN) model to explicitly facilitate reasoning over the turns of dialogue and all slot-value pairs for better exploitation of coreferential relation. 
+**Implicit Mention Oriented Reasoning**: taking into consideration of complex implicit mentions in dialogue, the authors build a graph neural network (GNN) model to explicitly facilitate reasoning over the turns of dialogue and all slot-value pairs for better exploitation of co-referential relation. 
 
 ![图网络](./_resource/DST-GNN%20part.png)
+
+- The nodes in the graph include two types: $N_D$ for each turn dialogue and $N_{S-V}$ for each slot-value pair. They are initialized with the MHSA output representaion $[CLS]_t$ and $W_{S-V}([SLOT]_{T-1}^z\oplus[VALUE]_{T-1}^z)(1\leq z \leq J)$ 
+- The edges consist of four types
+    - Add an edge between $N_{S-V}^j$ and $N_D^T$ (red line in figure). As aforementioned, the slot $S_j$ will be updated. This edge to establish the connection between the slot to be updated and the current turn dialogue;
+    - Add an edge between $N_{S-V}^j$ and $N_{S-V}^z(z\neq j)$(blue line in figure). These edges are to establish connections between the slot to be updated and other slots
+    - Add an edge between $N_{S-V}^z(z\neq j)$ and $N_D^{t_z}$, $t_z$ is the turn when the most up-to-date value of $S_z$ is updated(green line in figure). These edges are to establish connections between each slot and the turn of dialogue in which its latest slot value was updated;
+    - Add an edge between $N_{S-V}^{z_1}$ and $N_{S-V}^{z_2} (z_1, z_2$ belong to the same domain)（yellow line in figure）. These edges are to establish connections between slots that belong to the same domain. 
+
+the authors use multi-relational GCN with gating mechanism. Let $h_i^0$ represents initial node embedding form $N_D$ or $N_{S-V}$. The calculation of node embedding after one hop can be formulated as:
+$$
+h_i^{l+1} = \sigma(u_i^l) \odot g_i^l + h_i^l \odot (1-g_i^l)\\
+u_i^l = f_s(h_i^l) + \sum_{r\in R}\frac{1}{|N_i^r|}\sum_{n\in N_i^r}f_r(h_n^l)\\
+g_i^l = \text{sigmoid}(f_g([u_g^l; h_i^l]))
+$$
+$N_i^r$ is the neighbors of node $i$ with edge type $r$, $R$ is the set of all edge types, and $h_n^l$ is the node representation of node $n$ in layer $l$. Each of $f_r, f_s, f_g$ can be implemented with an MLP. Gate control $g_i^l$ is a vector consisting of values between 0 and 1 to control the amount information from computed update $u_i^l$ or from the original $h_i^l$. Function $\sigma$ denotes a non-linear activation function. After the message passes on the graph with $L$ hops, the final representaion of the $t$ th turn dialogue node $N_D^t$ as the aggregated representation $h_{IMOR}^t$ in this perspective.
+
+**Gate Fusion and collaborative selection**: The representation $h_{SN-DH}^t, h_{CT-DH}^t, h_{IMOR}^t$ of $t$-th turn dialogue enter this module for fusion and ranking. 
+$$
+h_{sum}^t = \beta_1 h_{SN-DH}^t + \beta_2 h_{CT-DH} + \beta_3 h_{IMOR}^t\\
+\beta_i = \sigma(W_{\beta_{i1}} \tanh(W_{\beta_{i2}} h_{\beta_i}^t))
+$$
+where $h_{\beta_{i}}^t$ is relative hidden state of $D_t$.
+
+
+
+**State Generator**： After getting a selected dialogue set $U_D$, the author concatenate these dialogue utterances together to form a new input sequence $C = [CLS] \oplus B_{T-1} \oplus <t>_1\oplus D_1\oplus\cdots\oplus <t>_{T\_S}\oplus D_{T\_S}\oplus <T>_T\oplus D_T(T\_S = |U_D|)$
+
+Here the author inject an indicator token "$<t>$" before each turn of dialogue utterance to get aggregated turn embeddins for the subsequent classification-based state prediction.
+
+- Slot Value Generation (span prediction):  using the extractive method from representaion $C_E = D_1 \oplus D_2 \oplus ...\oplus D_{T\_S}\oplus D_T$:
+    $$
+    p = \text{softmax}(W_sC_E [SLOT]_{T-1}^j)^T)\\
+    q = \text{softmax}(W_eC_E [SLOT]_{T-1}^j)^T)
+    $$
+    the span of $<p,q>$ is taken as the prediction. If this prediction does not belone to the candidate value set of $S_j$, the model use the representation of $C_C = <t>_1 \oplus ... \oplus <t>_{T\S} \oplus <t>_T$ to get the distribution and choose the candidate slot value corresponding to the maximum value 
+    $$
+    y = \text{softmax} (W_CC_C([SLOT]_{T-1}^j)^T)
+    $$
+
+The training objectives of two methods as cross-entropy loss:
+$$
+L_{ext} = -\frac{1}{|U_s|}\sum_j^{|U_s}(p\log \hat p + q\log \hat q)\\
+L_{cls} = -\frac{1}{U_s}\sum_j^{|U_s|}y\log \hat y
+$$
+
+
+hyper-parameters:
+
+- dropout: 0.1
+- Language model: ALBERT-large-uncased model
+- hidden size of encoder d: 1024
+- optimizer: AdamW warmup proportion 0.01 and L2 weight decay of 0.01. 
+- learning rate: the state update predictor the same as in DSS-DST 0.03 and of the other modules to 0.0001
+- word dropout: 0.1
+- GNN L: 3
+- max sequence length for all inputs: 256
