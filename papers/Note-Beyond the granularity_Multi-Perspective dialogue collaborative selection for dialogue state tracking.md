@@ -53,6 +53,34 @@ E_t = [CLS]_t \oplus B_{T-1}\oplus [SEP]\oplus D_t(1\leq t \leq T)
 $$
 where $[CLS]_t$ is a special token added in front of every turn input. The representation of the previous turn dialogue state is $B_{T-1} = B_{T-1}^1\oplus \cdots \oplus B_{T-1}^J$. The representation of each slot's state $B_{T-1}^j = [SLOT]_{T-1}^j\oplus S_j\oplus [VALUE]_{T-1}^j \oplus V_{T-1}^j$, where $[SLOT]_{T-1}^j$ and $[VALUE]_{T-1}^j$ are special tokens that represent the slot name and the slot value at turn $T-1$. The representation of the dialogue at turn $t$ as $D_t = R_t\oplus;\oplus U_t [SEP]$, where $R_t$ is the system response and $U_t$ is the user utterance. Here ";" is a special token used to mark the boundary between $R_t$ and $U_t$, and $[SEP]$ is a special token used to mark the end of a dialogue turn.
 
-SN-DH:
+**State Update predictor**: for all slot this module predicts relative gate to discern whether the slot should be updated or not.
+$$
+SUP(S_j) = \left\{
+    \begin{array}{}
+    update,& if\; Total\_score_j > \delta\\
+    inherit,& otherwise
+    \end{array}
+\right .
+$$
+Let $U_s = {j|SUP(S_j) = update}$ be the set of the selected slot indices.
+For each slot $S_j (j \in U_s)$ selected to be updated SN-DH, CT-DH, and Implicit mention oriented reasoning modules are proposed to evaluate dialogue relevance and aggregate representations from three perspectives. 
 
-To Be Continue
+**Slot name - dialogue history(SN-DH)**: For slot $S_j$, the module takes the slot name presentation $[SLOT]_{T-1}^j$ as the attention to the $t$-th turn dialogue representation $D_t$. The output $\alpha_t^j = \text{softmax}(D_t([SLOT]_{T-1}^j)^T)$ represents the correlation between each position of $D_t$ and the $j$-th slot name at turn $t$. Finally, the module outputs the aggregated dialogue representation $h_{SN-DH}^j=(\alpha_t^j)D_t$.
+
+**Current turn - dialogue history(CT-DH)**: this module builds a multi-head self-attention(MHSA) layer on top of the $[CLS]$ tokens generated from different turns of dialogue to enhance inter-turn interaction. The MHSA layer is defined as :
+$$
+head_i = Attention(QW_i^Q, KW_i^K, VW_i^V)\\
+Multihead = (head_i \oplus ... \oplus head_n)W^O\\
+I = MHSA([CLS]_1\oplus ... \oplus [CLS]_T)
+$$
+where $Q,K,V$ are linear projections from $[CLS]$ embeddings of each turn of dialogue, representing attention queries, key, and values.
+
+Then the authors append an attention layer between output representation of the current turn dialogue and each turn of dialogue history to capture interactions between them:
+$$
+\gamma_t = Attention([CLS]_t, [CLS]_T)
+h_{CT-DH}^t = \gamma_t[CLS]_T + [CLS]_t
+$$
+
+**Implicit Mention Oriented Reasoning**: taking into consideration of complex implicit mentions in dialogue, the authors build a graph neural network (GNN) model to explicitly facilitate reasoning over the turns of dialogue and all slot-value pairs for better exploitation of coreferential relation. 
+
+![图网络](./_resource/DST-GNN%20part.png)
