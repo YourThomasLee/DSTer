@@ -14,8 +14,22 @@ tags:
 - explicit connection to the slot name
 - relevance to the current turn dialogue 
 - implicit mention oriented reasoning
-
 based on three types evaluation the model decides to select dialogue contents which are fed to state generator.
+
+**experiment**
+hyper-parameters setting:
+- dropout: 0.1
+- Language model: ALBERT-large-uncased model
+- hidden size of encoder $d$: 1024
+- optimizer: AdamW warmup proportion 0.01 and L2 weight decay of 0.01. 
+- learning rate: the state update predictor the same as in DSS-DST 0.03 and of the other modules to 0.0001
+- word dropout: 0.1
+- GNN L: 3
+- max sequence length for all inputs: 256
+
+Actually, I found that this model is memory-hungry. It is not reproduce-friendly.
+
+
 
 **Detail Information**: 
 
@@ -132,13 +146,3 @@ L_{cls} = -\frac{1}{U_s}\sum_j^{|U_s|}y\log \hat y
 $$
 
 
-hyper-parameters:
-
-- dropout: 0.1
-- Language model: ALBERT-large-uncased model
-- hidden size of encoder d: 1024
-- optimizer: AdamW warmup proportion 0.01 and L2 weight decay of 0.01. 
-- learning rate: the state update predictor the same as in DSS-DST 0.03 and of the other modules to 0.0001
-- word dropout: 0.1
-- GNN L: 3
-- max sequence length for all inputs: 256
