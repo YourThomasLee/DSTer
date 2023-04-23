@@ -1,6 +1,6 @@
 ---
 title: Note-Beyond the granularity-Multi-perspective dialogue collaborative selection for dialogue state tracking
-date: 2023-04-19 22:26:53
+date: 2023-04-21 22:26:53
 tags: 
 - Natural language processing
 - dialogue state tracking
@@ -24,7 +24,7 @@ hyper-parameters setting:
 - optimizer: AdamW warmup proportion 0.01 and L2 weight decay of 0.01. 
 - learning rate: the state update predictor the same as in DSS-DST 0.03 and of the other modules to 0.0001
 - word dropout: 0.1
-- GNN L: 3
+- GNN $L$: 3
 - max sequence length for all inputs: 256
 
 Actually, I found that this model is memory-hungry. It is not reproduce-friendly.
