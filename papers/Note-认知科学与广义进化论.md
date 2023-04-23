@@ -1,148 +1,69 @@
 ---
 title: Note-Beyond the granularity-Multi-perspective dialogue collaborative selection for dialogue state tracking
-date: 2023-04-19 22:26:53
+date: 2023-04-22 22:26:53
 tags: 
-- Natural language processing
-- dialogue state tracking
-- dialogue history
+- cognition evoluation
 ---
 
-**Problem**: existing models use whole dialogue history for updating all dialogue state. The authors believe updating different slots in different turns requires different dialogue history, and using consistent dialogue contents leads to insufficiency or redundant information for different slots, which degrades the performance of dialogue state tracking models.
-
-**Work**:  The authors devise DiCoS-DST to dynamically select the relevant dialogue contents to each slot for state tracking. The model evaluates the turn-level utterance of dialogue history from three perspective
-
-- explicit connection to the slot name
-- relevance to the current turn dialogue 
-- implicit mention oriented reasoning
-based on three types evaluation the model decides to select dialogue contents which are fed to state generator.
-
-**experiment**
-hyper-parameters setting:
-- dropout: 0.1
-- Language model: ALBERT-large-uncased model
-- hidden size of encoder $d$: 1024
-- optimizer: AdamW warmup proportion 0.01 and L2 weight decay of 0.01. 
-- learning rate: the state update predictor the same as in DSS-DST 0.03 and of the other modules to 0.0001
-- word dropout: 0.1
-- GNN L: 3
-- max sequence length for all inputs: 256
-
-Actually, I found that this model is memory-hungry. It is not reproduce-friendly.
+# 认知科学与广义进化论
 
 
 
-**Detail Information**: 
+## 序言
 
-In DST, the definition of granularity ($g$ turns utterance before) is the number of dialogue turns spanning from a certain dialogue state in the dialogue to the current dialogue state.
+本书的目标是建立认知科学的核心理论。通俗的说，试图要回答问题： 人的大脑（或心灵）是按照什么原理工作的？
 
-For previous research, models set the granularity of all slots as a fixed number, i.e.,  $\text{granularity}(t, slot_i) = k,\; i =1,2,\cdots, n$, where $n$ denotes the number of all slots, $t$ represents the turns of dialogue and $k$ is a constant or hyper-parameter.  This paper proposes a model $\text{granularity}(t, slot_i) = k_i$.
+第一章：人工智能的失误并不是技术上的失误，而是哲学层次上的失误，直接的说就是在路灯下找钥匙，而非在丢钥匙的地方找钥匙。
 
-there are three parts for modeling different perspectives consideration.
+第二章从比较文化学的角度入手，从更深层去挖掘认识论差异的差异。
 
-- (slot name,dialogue history,): devise an SN-DH module to touch on the relation of the dialogue history and the slot name, which directly reflects the relevance.
-- (current turn, dialogue history): propose a CT-DH module to explore the dependency between each turn in the dialogue history and current turn dialogue
-- (current_turn, co-references): propose an Implicit Mention Oriented Reasoning module to tackle the implicit mention(co-references) problems that commonly exists in complex dialogues.
+第三章介绍广义进化论。
 
-the model can be represented as $P(turns) = P(turns| current\_turn, update\_gates, implict\_coreference)$
+第四章运用广义进化论的观点，对认知和思维的重大问题进行分析，建立了感情和意识的具有工程可实现性的理论模型。
 
-![](./_resource/DiCoS-DST-model.png)
-
-the process follows flow process:
-
-```mermaid
-graph LR
-Encoder-->State_Update_Predictor
-State_Update_Predictor-->SN-DH
-State_Update_Predictor-->CT-DH
-State_Update_Predictor-->Implicit_Mention_oriented_Reasoning
-SN-DH-->set_of_selected_dialogue_turns
-CT-DH-->set_of_selected_dialogue_turns
-Implicit_Mention_oriented_Reasoning-->set_of_selected_dialogue_turns
-set_of_selected_dialogue_turns-->State_Generator
-```
+第五章运用伦理学、美学等实例。
 
 
 
-Information encoding process: the authors employ the representation of the previous turn dialogue state $B_{T-1}$ concatenated to the representation of each turn dialogue utterances $D_t$ as input:
-$$
-E_t = [CLS]_t \oplus B_{T-1}\oplus [SEP]\oplus D_t(1\leq t \leq T)
-$$
-where $[CLS]_t$ is a special token added in front of every turn input. The representation of the previous turn dialogue state is $B_{T-1} = B_{T-1}^1\oplus \cdots \oplus B_{T-1}^J$. The representation of each slot's state $B_{T-1}^j = [SLOT]_{T-1}^j\oplus S_j\oplus [VALUE]_{T-1}^j \oplus V_{T-1}^j$, where $[SLOT]_{T-1}^j$ and $[VALUE]_{T-1}^j$ are special tokens that represent the slot name and the slot value at turn $T-1$. The representation of the dialogue at turn $t$ as $D_t = R_t\oplus;\oplus U_t [SEP]$, where $R_t$ is the system response and $U_t$ is the user utterance. Here ";" is a special token used to mark the boundary between $R_t$ and $U_t$, and $[SEP]$ is a special token used to mark the end of a dialogue turn.
+## 第一章 绪论
 
-**State Update predictor**: for all slot this module predicts relative gate to discern whether the slot should be updated or not.
-$$
-SUP(S_j) = \left\{
-    \begin{array}{}
-    update,& if\; Total\_score_j > \delta\\
-    inherit,& otherwise
-    \end{array}
-\right .
-$$
-Let $U_s = {j|SUP(S_j) = update}$ be the set of the selected slot indices.
-For each slot $S_j (j \in U_s)$ selected to be updated SN-DH, CT-DH, and Implicit mention oriented reasoning modules are proposed to evaluate dialogue relevance and aggregate representations from three perspectives. 
+类比问题：夜晚在路灯下找钥匙。关键问题是：
 
-**Slot name - dialogue history(SN-DH)**: For slot $S_j$, the module takes the slot name presentation $[SLOT]_{T-1}^j$ as the attention to the $t$-th turn dialogue representation $D_t$. The output $\alpha_t^j = \text{softmax}(D_t([SLOT]_{T-1}^j)^T)$ represents the correlation between each position of $D_t$ and the $j$-th slot name at turn $t$. Finally, the module outputs the aggregated dialogue representation $h_{SN-DH}^j=(\alpha_t^j)D_t$.
+- 钥匙究竟丢哪了？
+- 那儿为什么这么暗？
+- 能不能让暗处变亮？
 
-**Current turn - dialogue history(CT-DH)**: this module builds a multi-head self-attention(MHSA) layer on top of the $[CLS]$ tokens generated from different turns of dialogue to enhance inter-turn interaction. The MHSA layer is defined as :
-$$
-head_i = Attention(QW_i^Q, KW_i^K, VW_i^V)\\
-Multihead = (head_i \oplus ... \oplus head_n)W^O\\
-I = MHSA([CLS]_1\oplus ... \oplus [CLS]_T)
-$$
-where $Q,K,V$ are linear projections from $[CLS]$ embeddings of each turn of dialogue, representing attention queries, key, and values.
+实际在人工智能的问题就是：
 
-Then the authors append an attention layer between output representation of the current turn dialogue and each turn of dialogue history to capture interactions between them:
-$$
-\gamma_t = Attention([CLS]_t, [CLS]_T)
-h_{CT-DH}^t = \gamma_t[CLS]_T + [CLS]_t
-$$
+- 人工智能的根本性问题在何处？
+- 解决这些问题存在什么困难？
+- 这些困难能不能克服？
 
-**Implicit Mention Oriented Reasoning**: taking into consideration of complex implicit mentions in dialogue, the authors build a graph neural network (GNN) model to explicitly facilitate reasoning over the turns of dialogue and all slot-value pairs for better exploitation of co-referential relation. 
+指数爆炸问题：随着问题规模的变大，计算复杂度呈现指数级别上升。有意思的说法是：如果一个问题变为了指数爆炸问题，那么说明技术或模型已经走错了方向。
 
-![图网络](./_resource/DST-GNN%20part.png)
+产生的方案：
 
-- The nodes in the graph include two types: $N_D$ for each turn dialogue and $N_{S-V}$ for each slot-value pair. They are initialized with the MHSA output representaion $[CLS]_t$ and $W_{S-V}([SLOT]_{T-1}^z\oplus[VALUE]_{T-1}^z)(1\leq z \leq J)$ 
-- The edges consist of four types
-    - Add an edge between $N_{S-V}^j$ and $N_D^T$ (red line in figure). As aforementioned, the slot $S_j$ will be updated. This edge to establish the connection between the slot to be updated and the current turn dialogue;
-    - Add an edge between $N_{S-V}^j$ and $N_{S-V}^z(z\neq j)$(blue line in figure). These edges are to establish connections between the slot to be updated and other slots
-    - Add an edge between $N_{S-V}^z(z\neq j)$ and $N_D^{t_z}$, $t_z$ is the turn when the most up-to-date value of $S_z$ is updated(green line in figure). These edges are to establish connections between each slot and the turn of dialogue in which its latest slot value was updated;
-    - Add an edge between $N_{S-V}^{z_1}$ and $N_{S-V}^{z_2} (z_1, z_2$ belong to the same domain)（yellow line in figure）. These edges are to establish connections between slots that belong to the same domain. 
+- 符号主义：通过建设符号逻辑系统尝试问题的智能方案设计，属于先验论的哲学体系
+- 连接主义：利用数据进行学习和记忆，属于经验主义
+- 图灵测试：隶属行为主义或者操作主义的一种思维的定义。行为主义是心里学曾流行的研究方针，基本主张是只从可观测的行为出发，保证心理学遵循科学所必须重视的客观性准则，排斥诸如意识、感情、知觉、目的等依赖主观观察的用语。
 
-the authors use multi-relational GCN with gating mechanism. Let $h_i^0$ represents initial node embedding form $N_D$ or $N_{S-V}$. The calculation of node embedding after one hop can be formulated as:
-$$
-h_i^{l+1} = \sigma(u_i^l) \odot g_i^l + h_i^l \odot (1-g_i^l)\\
-u_i^l = f_s(h_i^l) + \sum_{r\in R}\frac{1}{|N_i^r|}\sum_{n\in N_i^r}f_r(h_n^l)\\
-g_i^l = \text{sigmoid}(f_g([u_g^l; h_i^l]))
-$$
-$N_i^r$ is the neighbors of node $i$ with edge type $r$, $R$ is the set of all edge types, and $h_n^l$ is the node representation of node $n$ in layer $l$. Each of $f_r, f_s, f_g$ can be implemented with an MLP. Gate control $g_i^l$ is a vector consisting of values between 0 and 1 to control the amount information from computed update $u_i^l$ or from the original $h_i^l$. Function $\sigma$ denotes a non-linear activation function. After the message passes on the graph with $L$ hops, the final representaion of the $t$ th turn dialogue node $N_D^t$ as the aggregated representation $h_{IMOR}^t$ in this perspective.
+这里有个奇妙的现象，谁也不知道真正的智能程序是个样子，但是谁都能判断某个程序是不是真正的智能。
 
-**Gate Fusion and collaborative selection**: The representation $h_{SN-DH}^t, h_{CT-DH}^t, h_{IMOR}^t$ of $t$-th turn dialogue enter this module for fusion and ranking. 
-$$
-h_{sum}^t = \beta_1 h_{SN-DH}^t + \beta_2 h_{CT-DH} + \beta_3 h_{IMOR}^t\\
-\beta_i = \sigma(W_{\beta_{i1}} \tanh(W_{\beta_{i2}} h_{\beta_i}^t))
-$$
-where $h_{\beta_{i}}^t$ is relative hidden state of $D_t$.
+认知科学的方向：
 
+- 路灯下找钥匙：放弃解开大脑认知之谜，考虑有应用价值的研究成果。弱人工智能的结果
+- 在丢钥匙的地方找钥匙：控制论的成功（各个学科的科学家聚在一起找出横贯所有学科的共同原理，在控制论里面这个核心就是负反馈）提供了一个方向，计算机与心理学组合并继续扩大，尝试去建模大脑的原理。六个学科分别是：哲学、心理学、语言学、人类学、人工智能、神经科学。
 
+自上而下：从哲学、语言、人类、心理学对大脑原理进行研究
 
-**State Generator**： After getting a selected dialogue set $U_D$, the author concatenate these dialogue utterances together to form a new input sequence $C = [CLS] \oplus B_{T-1} \oplus <t>_1\oplus D_1\oplus\cdots\oplus <t>_{T\_S}\oplus D_{T\_S}\oplus <T>_T\oplus D_T(T\_S = |U_D|)$
+自下而上：从神经科学、语言学、心理学来去进行研究
 
-Here the author inject an indicator token "$<t>$" before each turn of dialogue utterance to get aggregated turn embeddins for the subsequent classification-based state prediction.
+## 第二章 工程认识论
 
-- Slot Value Generation (span prediction):  using the extractive method from representaion $C_E = D_1 \oplus D_2 \oplus ...\oplus D_{T\_S}\oplus D_T$:
-    $$
-    p = \text{softmax}(W_sC_E [SLOT]_{T-1}^j)^T)\\
-    q = \text{softmax}(W_eC_E [SLOT]_{T-1}^j)^T)
-    $$
-    the span of $<p,q>$ is taken as the prediction. If this prediction does not belone to the candidate value set of $S_j$, the model use the representation of $C_C = <t>_1 \oplus ... \oplus <t>_{T\S} \oplus <t>_T$ to get the distribution and choose the candidate slot value corresponding to the maximum value 
-    $$
-    y = \text{softmax} (W_CC_C([SLOT]_{T-1}^j)^T)
-    $$
+认识论和认知科学都是对认识的认识，都是人造或者人为理解结果的梳理，直接的说，认知论和认知科学都是工程的一个产品。
 
-The training objectives of two methods as cross-entropy loss:
-$$
-L_{ext} = -\frac{1}{|U_s|}\sum_j^{|U_s}(p\log \hat p + q\log \hat q)\\
-L_{cls} = -\frac{1}{U_s}\sum_j^{|U_s|}y\log \hat y
-$$
+在认知科学中，工具与产品是同一个东西，认识论本身就决定了认知科学的成果，反之认知科学的结果也决定认识论。
 
+爱因斯坦说过：寻求一个明确体系的认识论者，一旦他要力求。。。
 
+从这句话中还可以做出更深一层的解释，那就是西方的所有
