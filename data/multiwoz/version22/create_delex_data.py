@@ -122,7 +122,7 @@ def addDBPointer(turn):
     domains = ['restaurant', 'hotel', 'attraction', 'train']
     pointer_vector = np.zeros(6 * len(domains))
     for domain in domains:
-        num_entities = dbPointer.queryResult(domain, turn)
+        num_entities = dbPointer.queryResult(domain, turn) 
         pointer_vector = dbPointer.oneHotVector(num_entities, domain, pointer_vector)
 
     return pointer_vector
@@ -282,9 +282,8 @@ def createDelexData():
     """
     # download the data
     loadData()
-    import pdb
-    pdb.set_trace()
     # create dictionary of delexicalied values that then we will search against, order matters here!
+    # 加载所有候选槽值，为后续打标记做准备
     dic = delexicalize.prepareSlotValuesIndependent()
     delex_data = {}
 
@@ -304,9 +303,11 @@ def createDelexData():
 
         for idx, turn in enumerate(dialogue['log']):
             # normalization, split and delexicalization of the sentence
+            #这里出现较多的替换，在正式的执行之间，建议使用缩写还原等手段恢复为文本
             sent = normalize(turn['text'])
 
             words = sent.split()
+            # 打标记： 替换值为标签
             sent = delexicalize.delexicalise(' '.join(words), dic)
 
             # parsing reference number GIVEN belief state
@@ -320,15 +321,16 @@ def createDelexData():
             dialogue['log'][idx]['text'] = sent
 
             if idx % 2 == 1:  # if it's a system turn
+                # pointer后续再看下
                 # add database pointer
                 pointer_vector = addDBPointer(turn)
                 # add booking pointer
                 pointer_vector = addBookingPointer(dialogue, turn, pointer_vector)
-
-                # print(pointer_vector)
+                # print(pointer_vector)  
+                # 这里应该是将用户对话的标签转化为向量
                 dialogue['log'][idx - 1]['db_pointer'] = pointer_vector.tolist()
 
-            # FIXING delexicalization:
+            # FIXING delexicalization: 根据用户动作进行文本打标记
             dialogue = fixDelex(dialogue_name, dialogue, data2, idx, idx_acts)
             idx_acts +=1
 
