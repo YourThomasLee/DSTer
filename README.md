@@ -41,4 +41,4 @@ check influence of the sequence order of dialogue history
 
 
 
-I decide to do further research based on "DiCoS" model
+I decides to reproduce the codes of trippy-dst firstly.

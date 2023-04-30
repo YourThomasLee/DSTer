@@ -24,7 +24,7 @@ np.random.seed(2)
 
 # GLOBAL VARIABLES
 DICT_SIZE = 400
-MAX_LENGTH = 50
+MAX_LENGTH = 200
 
 def is_ascii(s):
     return all(ord(c) < 128 for c in s)
@@ -405,13 +405,13 @@ def divideData(data):
 
     # save all dialogues
     with open('data/val_dials.json', 'w') as f:
-        json.dump(val_dials, f)
+        json.dump(val_dials, f, indent=4)
 
     with open('data/test_dials.json', 'w') as f:
-        json.dump(test_dials, f)
+        json.dump(test_dials, f, indent=4)
 
     with open('data/train_dials.json', 'w') as f:
-        json.dump(train_dials, f)
+        json.dump(train_dials, f, indent=4)
 
     return word_freqs_usr, word_freqs_sys
 
