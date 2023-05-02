@@ -27,9 +27,7 @@ hyper-parameters setting:
 - GNN $L$: 3
 - max sequence length for all inputs: 256
 
-Actually, I found that this model is memory-hungry. It is not reproduce-friendly.
-
-
+Actually, I found that this model is memory-hungry and this model is not reproduce-friendly. As a result, I want start from reproducing the TripPy-dst, which is very friendly in the style of coding.
 
 **Detail Information**: 
 
@@ -146,3 +144,5 @@ L_{cls} = -\frac{1}{U_s}\sum_j^{|U_s|}y\log \hat y
 $$
 
 
+
+**My comment**: Actually, it provides an efficient alternative way to dialogue history in dialogue state tracking. On the other hand, I found some previous papers are very similar to this one that using one group network architecture. I am not confident whether I should develop my model based on it. As a result, I turn into the coco-dst which is more friendly to reproducing.
