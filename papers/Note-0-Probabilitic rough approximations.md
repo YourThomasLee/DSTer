@@ -98,6 +98,19 @@ Assuming that the risk factors satisfies $\lambda_{11} \leq \lambda_{31} < \lamb
     P(A|[x]) \geq \beta = \frac{\lambda_{32} - \lambda_{22}}{(\lambda_{21} - \lambda_{31}) + (\lambda_{32} - \lambda_{22})}
     $$
 
+The implicit assumption:
+
+
+$$
+\lambda_{11} < \lambda_{12}; \quad \lambda_{32} < \lambda_{31}\\
+
+\\
+\lambda_{11} \leq \lambda_{31} < \lambda_{21}
+\\
+\lambda _{22} \leq \lambda_{32} < \lambda_{12}
+$$
+
+
 To make $\alpha \leq \gamma \leq \beta$ , the condition $(\lambda_{12} - \lambda_{32})(\lambda_{21} - \lambda_{31}) \geq (\lambda_{31} - \lambda_{11})(\lambda_{32} - \lambda_{22})$ is assumed.  The physical meaning of condition may be interpreted as follows. 
 $$
 \alpha \leq \gamma\\
@@ -131,3 +144,4 @@ In fact, the condition can be intuitively interpreted as saying that cost of cla
 
 ![](./_resource/decision_parameters.png)
 
+Actually, I think there is some vague details in this paper, to solve this problem, I write a little material to interpret the philosophy of probabilistic rough sets. you can read it at [here](./_resource/probabilistic rough set approximation.pdf)
