@@ -36,52 +36,43 @@ In an approximation space $apr = (U,E)$, all elements in the equivalence class $
 For deriving the probabilistic approximation operators, we have the following problem. The set of states is given by $\Omega=\{A, A^c\}$ indicating that an element is in $A$ and not in $A$, respectively.  We use the same symbol to denote both a subset $A$ and the corresponding state. With respect to three regions , the set of actions is given by $A=\{a_1, a_2, a_3\}$, where $a_1, a_2, a_3$ represent the three actions in classifying an object, namely, deciding $POS(A), BND(A), NEG(A)$.
 
 Let $\lambda(a_i|A)$ denote the loss incurred for taking action $a_i$ when an object in fact belongs to $A$, and let $\lambda(a_i|A^c)$ denote the loss incurred for taking the same actions when  the object does not belong to $A$. The rough membership values $\mu_A(x)=P(A|[x])$ and $\mu_{A^c}(x) = 1 - P(A^c|[x])$ are the probabilities that an object in the equivalence class $[x]$ belongs to $A$ and $A^c$.  The expected loss $R(a_i|[x])$ associated with taking the individual actions can be expressed as 
+
 $$
-R(a_1|[x]) = \lambda_{11}P(A|[x]) + \lambda_{12}P(A^c|[x])\\
+R(a_1|[x]) = \lambda_{11} P(A|[x]) + \lambda_{12}P(A^c|[x])\\
 =(\lambda_{11} - \lambda_{12})P(A|[x]) + \lambda_{12}\\
-
-R(a_2|[x]) = \lambda_{21}P(A|[x]) + \lambda_{22}P(A^c|[x])\\
-=(\lambda_{21} - \lambda_{22})P(A|[x]) + \lambda_{22}\\
-
-R(a_3|[x]) = \lambda_{31} P(A|[x]) + \lambda_{32}P(A^c|[x])\\
-=(\lambda_{31} - \lambda_{32})P(A|[x]) + \lambda_{32}
+R(a_2|[x]) = \lambda_{21}P(A|[x]) + \lambda_{22}P(A^c|[x])\\ 
+=(\lambda_{21} - \lambda_{22})P(A|[x]) + \lambda_{22}\\ 
+R(a_3|[x]) = \lambda_{31} P(A|[x]) + \lambda_{32}P(A^c|[x])\\ 
+=(\lambda_{31} - \lambda_{32})P(A|[x]) + \lambda_{32} 
 $$
+
 where $\lambda_{i1} = \lambda(a_i|A), \lambda_{i2} = \lambda(a_i|A^c)$, and $i=1,2,3$.  The bayesian decision procedure leads to the following minimum-risk decision rules:
 
 - P: If $R(a_1|[x]) \leq R(a_2|[x])$ and $R(a_1|[x]) \leq R(a_3|[x])$, decide $POS(A)$
     $$
     [(\lambda_{11} - \lambda_{12}) - (\lambda_{21} - \lambda_{22})]P(A|[x]) \leq \lambda_{22} - \lambda_{12}\\
-    
     \Rightarrow [(\lambda_{21} - \lambda_{11}) + (\lambda_{12} - \lambda_{22})]P(A|[x]) \geq \lambda_{12} - \lambda_{22}\\
-    
     [(\lambda_{11} - \lambda_{12}) - (\lambda_{31} - \lambda_{32})]P(A|[x]) \leq \lambda_{32} - \lambda_{12}\\
-    
     \Rightarrow [(\lambda_{31} - \lambda_{11}) + (\lambda_{12} - \lambda_{32})]P(A|[x]) \geq \lambda_{12} - \lambda_{32}
     $$
 
 - N: If $R(a_2|[x]) \leq R(a_1|[x])$ and $R(a_2|[x]) \leq R(a_3|[x])$ decide $NEG(A)$
     $$
     [(\lambda_{21} - \lambda_{11}) + (\lambda_{12} - \lambda_{22})]P(A|[x]) \leq \lambda_{12} - \lambda_{22}\\
-    
     [(\lambda_{21} - \lambda_{31}) + (\lambda_{32} - \lambda_{22})]P(A|[x]) \leq \lambda_{32} - \lambda_{22}
     $$
 
 - B: If $R(a_3|[x]) \leq R(a_1|[x])$ and $R(a_3|[x]) \leq R(a_2|[x])$ decide $BND(A)$
     $$
     [(\lambda_{31} - \lambda_{32}) - (\lambda_{11} - \lambda_{12})]P(A|[x]) \leq \lambda_{12} - \lambda_{32} \\
-    
-    
-    
     [(\lambda_{21} - \lambda_{31}) + (\lambda_{32} - \lambda_{22})] P(A|[x]) \geq \lambda_{22} - \lambda_{32}
     $$
     
-
 Assuming that the risk factors satisfies $\lambda_{11} \leq \lambda_{31} < \lambda_{21} [POS(A) \leq BND(A) < NEG(A)]$, $\lambda _{22} \leq \lambda_{32} < \lambda_{12}$ and $(\lambda_{12} - \lambda_{32})(\lambda_{21} - \lambda_{31}) \geq (\lambda_{31} - \lambda_{11})(\lambda_{32} - \lambda_{22})$, we can get:
 
 - $POS(A)$ 
     $$
     P(A|[x]) \geq \gamma = \frac{\lambda_{12} - \lambda_{22}}{(\lambda_{21} - \lambda_{11}) + (\lambda_{12} - \lambda_{22})}\\
-    
     P(A|[x]) \geq \alpha = \frac{\lambda_{12} - \lambda_{32}}{(\lambda_{31} - \lambda_{11}) + (\lambda_{12} - \lambda_{32})}
     $$
 
@@ -94,7 +85,6 @@ Assuming that the risk factors satisfies $\lambda_{11} \leq \lambda_{31} < \lamb
 - $BND(A)$:
     $$
     P(A|[x]) \leq \alpha = \frac{\lambda_{12} - \lambda_{32}}{(\lambda_{31} - \lambda_{11}) + (\lambda_{12} - \lambda_{32})}\\
-    
     P(A|[x]) \geq \beta = \frac{\lambda_{32} - \lambda_{22}}{(\lambda_{21} - \lambda_{31}) + (\lambda_{32} - \lambda_{22})}
     $$
 
@@ -114,28 +104,17 @@ $$
 To make $\alpha \leq \gamma \leq \beta$ , the condition $(\lambda_{12} - \lambda_{32})(\lambda_{21} - \lambda_{31}) \geq (\lambda_{31} - \lambda_{11})(\lambda_{32} - \lambda_{22})$ is assumed.  The physical meaning of condition may be interpreted as follows. 
 $$
 \alpha \leq \gamma\\
-
 \frac{\lambda_{12} - \lambda_{22}}{(\lambda_{21} - \lambda_{11}) + (\lambda_{12} - \lambda_{22})} 
-
 \geq 
-
 \frac{\lambda_{12} - \lambda_{32}}{(\lambda_{31} - \lambda_{11}) + (\lambda_{12} - \lambda_{32})}\\
-
 (\lambda_{12} - \lambda_{22})[(\lambda_{31} - \lambda_{11}) + (\lambda_{12} - \lambda_{32})] 
-
 \geq
-
 (\lambda_{12} - \lambda_{32})[(\lambda_{21} - \lambda_{11}) + (\lambda_{12} - \lambda_{22})]
-
 \\
 \Rightarrow \lambda_{32}[(\lambda_{21} - \lambda_{11}) + (\lambda_{12} - \lambda_{22})] - \lambda_{22}[(\lambda_{31} - \lambda_{11}) + (\lambda_{12} - \lambda_{32})] \\
-
 \geq 
-
 \lambda_{12}[\lambda_{21} - \lambda_{22} - \lambda_{31} + \lambda_{32}]
 $$
-
-
 
 
 Let $l=(\lambda_{12} - \lambda_{32})(\lambda_{21} - \lambda_{31})$ and $r=(\lambda_{31} - \lambda_{11})(\lambda_{32} - \lambda_{22})$. While $l$ is the product of the diﬀerences between **the cost of making an incorrect classiﬁcation** and **cost of classifying an element into the boundary region**, $r$ is the product of the differences between **the cost of classifying an element into the boundary region** and **the cost of a correct classiﬁcation**. 
@@ -144,4 +123,33 @@ In fact, the condition can be intuitively interpreted as saying that cost of cla
 
 ![](./_resource/decision_parameters.png)
 
+<<<<<<< HEAD
 Actually, I think there is some vague details in this paper, to solve this problem, I write a little material to interpret the philosophy of probabilistic rough sets. you can read it at [here](./_resource/probabilistic rough set approximation.pdf)
+=======
+
+### Reflection
+Actually, I think that original paper has not answer such a question: why should we adopt three-way decision from the perspective of optimization. Now here I just try to give an alternative reply.
+If we adopt original two-way decision, then the loss should be:
+$$
+R(a_1|[x]) = \lambda_{11}P(A|[x]) + \lambda_{12}P(A^c|[x]) \\
+=(\lambda_{11} - \lambda_{12})P(A|[x]) + \lambda_{12} \\
+
+R(a_2|[x]) = \lambda_{21}P(A|[x]) + \lambda_{22}P(A^c|[x]) \\
+=(\lambda_{21} - \lambda_{22})P(A|[x]) + \lambda_{22} \\
+$$ 
+
+In fact, there are two situations as follows:
+$$
+
+(\lambda_{11} - \lambda_{12})P(A|[x]) + \lambda_{12} \leq (\lambda_{21} - \lambda_{22})P(A|[x]) + \lambda_{22}\\
+
+[(\lambda_{11} - \lambda_{12}) - (\lambda_{21} - \lambda_{22})]P(A|[x]) \leq \lambda_{22} - \lambda_{12}\\
+
+[(\lambda_{11} - \lambda_{21}) + ( \lambda_{22} - \lambda_{12})]P(A|[x]) \leq \lambda_{22} - \lambda_{12}\\
+
+(\lambda_{11} - \lambda_{12})P(A|[x]) + \lambda_{12} \geq (\lambda_{21} - \lambda_{22})P(A|[x]) + \lambda_{22}
+
+\\
+
+$$
+>>>>>>> 14444f8 (skip)
