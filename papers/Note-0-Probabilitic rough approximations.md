@@ -68,6 +68,7 @@ where $\lambda_{i1} = \lambda(a_i|A), \lambda_{i2} = \lambda(a_i|A^c)$, and $i=1
     [(\lambda_{21} - \lambda_{31}) + (\lambda_{32} - \lambda_{22})] P(A|[x]) \geq \lambda_{22} - \lambda_{32}
     $$
     
+
 Assuming that the risk factors satisfies $\lambda_{11} \leq \lambda_{31} < \lambda_{21} [POS(A) \leq BND(A) < NEG(A)]$, $\lambda _{22} \leq \lambda_{32} < \lambda_{12}$ and $(\lambda_{12} - \lambda_{32})(\lambda_{21} - \lambda_{31}) \geq (\lambda_{31} - \lambda_{11})(\lambda_{32} - \lambda_{22})$, we can get:
 
 - $POS(A)$ 
@@ -123,9 +124,10 @@ In fact, the condition can be intuitively interpreted as saying that cost of cla
 
 ![](./_resource/decision_parameters.png)
 
-<<<<<<< HEAD
+
+
 Actually, I think there is some vague details in this paper, to solve this problem, I write a little material to interpret the philosophy of probabilistic rough sets. you can read it at [here](./_resource/probabilistic rough set approximation.pdf)
-=======
+
 
 ### Reflection
 Actually, I think that original paper has not answer such a question: why should we adopt three-way decision from the perspective of optimization. Now here I just try to give an alternative reply.
@@ -136,11 +138,10 @@ R(a_1|[x]) = \lambda_{11}P(A|[x]) + \lambda_{12}P(A^c|[x]) \\
 
 R(a_2|[x]) = \lambda_{21}P(A|[x]) + \lambda_{22}P(A^c|[x]) \\
 =(\lambda_{21} - \lambda_{22})P(A|[x]) + \lambda_{22} \\
-$$ 
+$$
 
 In fact, there are two situations as follows:
 $$
-
 (\lambda_{11} - \lambda_{12})P(A|[x]) + \lambda_{12} \leq (\lambda_{21} - \lambda_{22})P(A|[x]) + \lambda_{22}\\
 
 [(\lambda_{11} - \lambda_{12}) - (\lambda_{21} - \lambda_{22})]P(A|[x]) \leq \lambda_{22} - \lambda_{12}\\
@@ -150,6 +151,5 @@ $$
 (\lambda_{11} - \lambda_{12})P(A|[x]) + \lambda_{12} \geq (\lambda_{21} - \lambda_{22})P(A|[x]) + \lambda_{22}
 
 \\
-
 $$
->>>>>>> 14444f8 (skip)
+
