@@ -103,19 +103,6 @@ $$
 
 
 To make $\alpha \leq \gamma \leq \beta$ , the condition $(\lambda_{12} - \lambda_{32})(\lambda_{21} - \lambda_{31}) \geq (\lambda_{31} - \lambda_{11})(\lambda_{32} - \lambda_{22})$ is assumed.  The physical meaning of condition may be interpreted as follows. 
-$$
-\alpha \leq \gamma\\
-\frac{\lambda_{12} - \lambda_{22}}{(\lambda_{21} - \lambda_{11}) + (\lambda_{12} - \lambda_{22})} 
-\geq 
-\frac{\lambda_{12} - \lambda_{32}}{(\lambda_{31} - \lambda_{11}) + (\lambda_{12} - \lambda_{32})}\\
-(\lambda_{12} - \lambda_{22})[(\lambda_{31} - \lambda_{11}) + (\lambda_{12} - \lambda_{32})] 
-\geq
-(\lambda_{12} - \lambda_{32})[(\lambda_{21} - \lambda_{11}) + (\lambda_{12} - \lambda_{22})]
-\\
-\Rightarrow \lambda_{32}[(\lambda_{21} - \lambda_{11}) + (\lambda_{12} - \lambda_{22})] - \lambda_{22}[(\lambda_{31} - \lambda_{11}) + (\lambda_{12} - \lambda_{32})] \\
-\geq 
-\lambda_{12}[\lambda_{21} - \lambda_{22} - \lambda_{31} + \lambda_{32}]
-$$
 
 
 Let $l=(\lambda_{12} - \lambda_{32})(\lambda_{21} - \lambda_{31})$ and $r=(\lambda_{31} - \lambda_{11})(\lambda_{32} - \lambda_{22})$. While $l$ is the product of the diﬀerences between **the cost of making an incorrect classiﬁcation** and **cost of classifying an element into the boundary region**, $r$ is the product of the differences between **the cost of classifying an element into the boundary region** and **the cost of a correct classiﬁcation**. 
@@ -124,32 +111,4 @@ In fact, the condition can be intuitively interpreted as saying that cost of cla
 
 ![](./_resource/decision_parameters.png)
 
-
-
-Actually, I think there is some vague details in this paper, to solve this problem, I write a little material to interpret the philosophy of probabilistic rough sets. you can read it at [here](./_resource/probabilistic rough set approximation.pdf)
-
-
-### Reflection
-Actually, I think that original paper has not answer such a question: why should we adopt three-way decision from the perspective of optimization. Now here I just try to give an alternative reply.
-If we adopt original two-way decision, then the loss should be:
-$$
-R(a_1|[x]) = \lambda_{11}P(A|[x]) + \lambda_{12}P(A^c|[x]) \\
-=(\lambda_{11} - \lambda_{12})P(A|[x]) + \lambda_{12} \\
-
-R(a_2|[x]) = \lambda_{21}P(A|[x]) + \lambda_{22}P(A^c|[x]) \\
-=(\lambda_{21} - \lambda_{22})P(A|[x]) + \lambda_{22} \\
-$$
-
-In fact, there are two situations as follows:
-$$
-(\lambda_{11} - \lambda_{12})P(A|[x]) + \lambda_{12} \leq (\lambda_{21} - \lambda_{22})P(A|[x]) + \lambda_{22}\\
-
-[(\lambda_{11} - \lambda_{12}) - (\lambda_{21} - \lambda_{22})]P(A|[x]) \leq \lambda_{22} - \lambda_{12}\\
-
-[(\lambda_{11} - \lambda_{21}) + ( \lambda_{22} - \lambda_{12})]P(A|[x]) \leq \lambda_{22} - \lambda_{12}\\
-
-(\lambda_{11} - \lambda_{12})P(A|[x]) + \lambda_{12} \geq (\lambda_{21} - \lambda_{22})P(A|[x]) + \lambda_{22}
-
-\\
-$$
-
+Actually, I think there is some vague details in this paper, to solve this problem, I write a little material to interpret the philosophy of probabilistic rough sets. you can read it at [here](./_resource/probabilistic rough set approximation.pdf) [The content was written in Chinese, if it is obsessed for you, you can contact me for the translation]
