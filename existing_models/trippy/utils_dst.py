@@ -25,19 +25,6 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-
-def print_header():
-    logger.info(" _________  ________  ___  ________  ________  ___    ___ ")
-    logger.info("|\___   ___\\\   __  \|\  \|\   __  \|\   __  \|\  \  /  /|")
-    logger.info("\|___ \  \_\ \  \|\  \ \  \ \  \|\  \ \  \|\  \ \  \/  / /")
-    logger.info("     \ \  \ \ \   _  _\ \  \ \   ____\ \   ____\ \    / / ")
-    logger.info("      \ \  \ \ \  \\\  \\\ \  \ \  \___|\ \  \___|\/  /  /  ")
-    logger.info("       \ \__\ \ \__\\\ _\\\ \__\ \__\    \ \__\ __/  / /    ")
-    logger.info("        \|__|  \|__|\|__|\|__|\|__|     \|__||\___/ /     ")
-    logger.info("          (c) 2022 Heinrich Heine University \|___|/      ")
-    logger.info("")
-
-
 class DSTExample(object):
     """
     A single training/test example for the DST dataset.

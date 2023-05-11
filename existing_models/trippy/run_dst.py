@@ -515,8 +515,7 @@ def load_and_cache_examples(args, model, tokenizer, processor, evaluate=False):
 
     return dataset, features
 
-
-def main():
+def load_args():
     parser = argparse.ArgumentParser()
 
     # Required parameters
@@ -636,6 +635,9 @@ def main():
     assert not args.class_aux_feats_inform or args.per_gpu_eval_batch_size == 1
     assert not args.class_aux_feats_ds or args.per_gpu_eval_batch_size == 1
 
+def main():
+    
+    args = load_args()
     task_name = args.task_name.lower()
     if task_name not in PROCESSORS:
         raise ValueError("Task not found: %s" % (task_name))
@@ -660,7 +662,7 @@ def main():
     logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
                         datefmt = '%m/%d/%Y %H:%M:%S',
                         level = logging.INFO if args.local_rank in [-1, 0] else logging.WARN)
-    print_header()
+    
     logger.warning("Process rank: %s, device: %s, n_gpu: %s, distributed training: %s, 16-bits training: %s",
                    args.local_rank, device, args.n_gpu, bool(args.local_rank != -1), args.fp16)
 
@@ -670,7 +672,6 @@ def main():
     # Load pretrained model and tokenizer
     if args.local_rank not in [-1, 0]:
         torch.distributed.barrier()  # Make sure only the first process in distributed training will download model & vocab
-
     args.model_type = args.model_type.lower()
     config_class, model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
     config = config_class.from_pretrained(args.config_name if args.config_name else args.model_name_or_path, local_files_only=args.local_files_only)
@@ -698,7 +699,7 @@ def main():
 
     model.to(args.device)
 
-    logger.info("Training/evaluation parameters %s", args)
+    logger.info("Training/evaluation parameters %s", json.dumps(args, indent=4))
 
     # Training
     if args.do_train:
