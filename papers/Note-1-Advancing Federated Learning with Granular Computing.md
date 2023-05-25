@@ -43,4 +43,17 @@ with the data.
 
 ![Fig. 2.](_resource/granule%20creditability.png)
 
-Taking a numeric model $M$ expressed as $y = M(x; w)$ as an example, where $M$ is designed in a supervised mode on he basis pairs of input-output data $(x_k, target_k), k=1,2,...,N$.  
+Taking a numeric model $M$ expressed as $y = M(x; w)$ as an example, where $M$ is designed in a supervised mode on he basis pairs of input-output data $(x_k, target_k), k=1,2,...,N$. Here $x$ is the vector of input variables, $w$, $dim(w) = m$, denotes a vector of estimated parameters of the model, $target_k$ is the output data for the corresponding $x_k$.
+
+The granular information granules $W$ is deduced by parameter $w$ with the level of information granularilty $\epsilon$. Namely, if we admit information granules in the form of intervals, we have the following expressions.
+$$
+w_i \rightarrow^\epsilon [\min(w_i(1+\epsilon), w_i(1-\epsilon)), \max(w_i(1+\epsilon), w_i(1- \epsilon))], \epsilon \in [0,1]\\
+w_i \rightarrow^\epsilon [\min(w_i(1+\epsilon), w_i/(1+\epsilon)), \max(w_i(1+\epsilon), w_i/(1-\epsilon))], \epsilon \geq 0
+$$ 
+
+The level $\epsilon$ is optimized by evaluating the resulting information granule $Y=G(M(x;w))$ in terms of coverage of data and its specificity. The pertinent formulas are given as 
+$$
+\overline {cov} = \frac{1}{N}\sum_{k=1}^N cov(target_k, Y_k)\\
+\overline {sp} = \frac{1}{N} \sum_{k=1}^N sp(Y_k)
+$$
+the principle can be written as $\epsilon_{opt} = \arg \max{cov(\epsilon)sp(\epsilon)}$
